@@ -1,0 +1,399 @@
+.about-page { position: relative; }
+
+/* Hero */
+.about-page__hero {
+  position: relative;
+  padding: calc(var(--nav-h) + var(--s-7)) 0 var(--s-7);
+  background: var(--c-bg-deep);
+  text-align: center;
+  overflow: hidden;
+  border-bottom: 1px solid var(--c-divider);
+  isolation: isolate;
+}
+.about-page__hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(180deg, rgba(13, 27, 60, 0.55) 0%, rgba(13, 27, 60, 0.35) 50%, rgba(13, 27, 60, 0.85) 100%),
+    url('/images/about_team_group.jpg');
+  background-size: cover, cover;
+  background-position: center, center 30%;
+  pointer-events: none;
+}
+.about-page__hero .container { position: relative; z-index: 1; }
+.about-page__hero .overline { margin-bottom: var(--s-3); color: rgba(205, 220, 245, 0.95); }
+.about-page__hero h1 {
+  font-family: var(--f-display);
+  font-size: clamp(2.5rem, 5.5vw, 4.2rem);
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--s-4);
+  color: #ffffff;
+  text-shadow: 0 2px 24px rgba(4, 10, 30, 0.55);
+}
+.about-page__hero .about-page__intro {
+  color: rgba(235, 243, 255, 0.92);
+  text-shadow: 0 1px 12px rgba(4, 10, 30, 0.4);
+}
+.about-page__intro {
+  max-width: 720px;
+  margin: 0 auto;
+  color: var(--c-text-sec);
+  font-family: var(--f-serif);
+  font-size: 1.18rem;
+  line-height: 1.8;
+}
+
+/* Mission */
+.about-page__mission {
+  background: var(--c-surface-alt);
+  border-top: 1px solid var(--c-divider);
+  border-bottom: 1px solid var(--c-divider);
+}
+.about-page__mission-inner {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: var(--s-6);
+  align-items: center;
+}
+.about-page__mission-inner .overline { margin-bottom: var(--s-3); }
+.about-page__mission-inner h2 {
+  font-family: var(--f-display);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  margin-bottom: var(--s-4);
+  line-height: 1.2;
+}
+.about-page__mission-inner p {
+  font-family: var(--f-serif);
+  color: var(--c-text-sec);
+  font-size: 1.08rem;
+  line-height: 1.85;
+  margin-bottom: var(--s-3);
+}
+.about-page__mission-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-2);
+}
+.about-page__stat {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-top: 2px solid var(--c-accent-h);
+  padding: var(--s-4) var(--s-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  transition: all var(--t-fast);
+}
+.about-page__stat:hover {
+  border-color: var(--c-border-h);
+  transform: translateY(-2px);
+}
+.about-page__stat-num {
+  font-family: var(--f-display);
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--c-accent-h);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.about-page__stat-label {
+  font-family: var(--f-ui);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+
+/* Section headers */
+.about-page__section-header {
+  text-align: center;
+  margin-bottom: var(--s-6);
+}
+.about-page__section-header .overline { margin-bottom: var(--s-3); }
+.about-page__section-header h2 {
+  font-family: var(--f-display);
+  font-size: clamp(1.8rem, 3vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: -0.015em;
+}
+
+/* Team */
+.about-page__team { background: var(--c-bg); }
+.about-page__team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-3);
+}
+.about-page__member {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-3);
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  text-align: center;
+  transition: all var(--t-fast);
+  position: relative;
+}
+.about-page__member::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 2px;
+  background: var(--c-accent-h);
+  opacity: 0;
+  transition: opacity var(--t-fast);
+}
+.about-page__member:hover {
+  border-color: var(--c-border-h);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 32px rgba(13, 27, 60, 0.10);
+}
+.about-page__member:hover::before { opacity: 1; }
+.about-page__member-avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--c-accent), var(--c-accent-deep));
+  color: #fff;
+  font-family: var(--f-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--c-border-h);
+}
+.about-page__member-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.about-page__member-name {
+  font-family: var(--f-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.about-page__member-role {
+  font-family: var(--f-ui);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-accent-h);
+}
+.about-page__member-class {
+  font-family: var(--f-ui);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  color: var(--c-text-muted);
+}
+
+/* Departments */
+.about-page__depts { background: var(--c-bg); border-top: 1px solid var(--c-divider); }
+.about-page__depts-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-3);
+}
+.about-page__dept {
+  padding: var(--s-5);
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  transition: all var(--t-fast);
+  position: relative;
+  overflow: hidden;
+}
+.about-page__dept::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: var(--c-accent-h);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--t-med);
+}
+.about-page__dept:hover {
+  border-color: var(--c-border-h);
+  transform: translateY(-3px);
+}
+.about-page__dept:hover::after { transform: scaleX(1); }
+.about-page__dept-icon {
+  font-size: 1.8rem;
+  color: var(--c-accent-h);
+  display: block;
+  margin-bottom: var(--s-3);
+  font-family: var(--f-display);
+}
+.about-page__dept-name {
+  font-family: var(--f-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: var(--s-2);
+  color: var(--c-text);
+}
+.about-page__dept-desc {
+  font-family: var(--f-serif);
+  font-size: 0.95rem;
+  color: var(--c-text-sec);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Acknowledgements */
+.about-page__thanks {
+  background: var(--c-surface-alt);
+  border-top: 1px solid var(--c-divider);
+  border-bottom: 1px solid var(--c-divider);
+}
+.about-page__thanks-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-3);
+}
+.about-page__thanks-card {
+  display: flex;
+  gap: var(--s-3);
+  align-items: flex-start;
+  padding: var(--s-4);
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-accent-h);
+  border-radius: 3px;
+  transition: all var(--t-fast);
+}
+.about-page__thanks-card:hover {
+  border-color: var(--c-border-h);
+  border-left-color: var(--c-accent-h);
+  transform: translateX(3px);
+}
+.about-page__thanks-avatar {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, var(--c-accent-soft), var(--c-surface));
+  border: 1px solid var(--c-border-h);
+  color: var(--c-accent-h);
+  font-family: var(--f-display);
+  font-size: 1rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  letter-spacing: 0.05em;
+}
+.about-page__thanks-name {
+  font-family: var(--f-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--c-text);
+}
+.about-page__thanks-role {
+  font-family: var(--f-ui);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-accent-h);
+  display: block;
+  margin-bottom: var(--s-2);
+}
+.about-page__thanks-note {
+  font-family: var(--f-serif);
+  font-size: 0.95rem;
+  color: var(--c-text-sec);
+  line-height: 1.7;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Editor's note */
+.about-page__note { background: var(--c-bg-deep); }
+.about-page__note-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+  padding: var(--s-6) var(--s-5);
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  position: relative;
+}
+.about-page__note-inner::before,
+.about-page__note-inner::after {
+  content: '';
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-color: var(--c-accent-h);
+  border-style: solid;
+}
+.about-page__note-inner::before {
+  top: -1px;
+  left: -1px;
+  border-width: 1px 0 0 1px;
+}
+.about-page__note-inner::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 1px 1px 0;
+}
+.about-page__note-inner .overline { margin-bottom: var(--s-3); }
+.about-page__note-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-accent-h), transparent);
+  opacity: 0.5;
+  margin: var(--s-4) auto;
+  max-width: 200px;
+}
+.about-page__note-quote {
+  font-family: var(--f-display);
+  font-size: 1.3rem;
+  font-style: italic;
+  color: var(--c-text);
+  line-height: 1.6;
+  margin: 0 0 var(--s-4);
+  border: none;
+  padding: 0;
+  font-weight: 400;
+}
+.about-page__note-authors {
+  font-family: var(--f-ui);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--c-accent-h);
+}
+
+@media (max-width: 1024px) {
+  .about-page__team-grid { grid-template-columns: repeat(3, 1fr); }
+  .about-page__depts-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+  .about-page__mission-inner { grid-template-columns: 1fr; }
+  .about-page__mission-stats { grid-template-columns: repeat(4, 1fr); }
+}
+@media (max-width: 768px) {
+  .about-page__team-grid { grid-template-columns: repeat(2, 1fr); }
+  .about-page__thanks-grid { grid-template-columns: 1fr; }
+  .about-page__mission-stats { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .about-page__team-grid { grid-template-columns: 1fr; }
+  .about-page__depts-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,91 @@
+.genre-page { position: relative; }
+
+.genre-page__hero {
+  position: relative;
+  padding: calc(var(--nav-h) + var(--s-6)) 0 var(--s-6);
+  background: var(--c-bg-deep);
+  overflow: hidden;
+  text-align: center;
+  border-bottom: 1px solid var(--c-divider);
+}
+.genre-page__hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 800px 300px at 50% 0%, var(--c-accent-soft) 0%, transparent 70%),
+    linear-gradient(180deg, transparent, var(--c-bg) 100%);
+  pointer-events: none;
+}
+.genre-page__hero .container { position: relative; z-index: 1; }
+
+.genre-page__breadcrumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  font-family: var(--f-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  margin-bottom: var(--s-5);
+}
+.genre-page__breadcrumb a {
+  color: var(--c-text-muted);
+  transition: color var(--t-fast);
+}
+.genre-page__breadcrumb a:hover { color: var(--c-accent-h); }
+
+.genre-page__hero .overline { margin-bottom: var(--s-3); }
+.genre-page__hero h1 {
+  font-family: var(--f-display);
+  font-size: clamp(2.5rem, 5.5vw, 4.2rem);
+  font-weight: 700;
+  margin-bottom: var(--s-3);
+  letter-spacing: -0.02em;
+}
+
+.genre-page__desc {
+  font-family: var(--f-serif);
+  color: var(--c-text-sec);
+  font-size: 1.15rem;
+  line-height: 1.75;
+  max-width: 640px;
+  margin: 0 auto var(--s-4);
+}
+.genre-page__count {
+  font-family: var(--f-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--c-accent-h);
+  padding: 8px 16px;
+  border: 1px solid var(--c-border-h);
+  display: inline-block;
+  margin-top: var(--s-2);
+}
+
+.genre-page__body {
+  padding: var(--s-6) 0 var(--s-7);
+}
+
+.genre-page__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s-4);
+}
+
+.genre-page__empty {
+  text-align: center;
+  padding: var(--s-7) 0;
+  color: var(--c-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-4);
+}
+
+@media (max-width: 1024px) { .genre-page__grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px) { .genre-page__grid { grid-template-columns: 1fr; } }

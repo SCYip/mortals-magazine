@@ -1,0 +1,58 @@
+# --- Dependencies ---
+node_modules/
+.pnp/
+.pnp.js
+.yarn/
+.npm/
+
+# --- Build output ---
+dist/
+build/
+out/
+.vite/
+
+# --- Logs / cache ---
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.eslintcache
+.turbo/
+.cache/
+.parcel-cache/
+
+# --- Environment / secrets ---
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# --- OS / editor cruft ---
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/
+*.sublime-*
+
+# --- Local development & one-shot scripts ---
+# Bulk image archive scraped from mortalsmag.com (78 MB, kept locally only)
+scraped_images/
+
+# Ad-hoc Python helper scripts left in the repo root
+_*.py
+
+# Stray Windows-path artifact directory
+d:/
+
+# --- Netlify CLI ---
+.netlify/
+
+# --- Misc ---
+*.tsbuildinfo
+coverage/
+.nyc_output/

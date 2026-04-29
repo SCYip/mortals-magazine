@@ -1,0 +1,108 @@
+.about {
+  background: var(--c-bg);
+  position: relative;
+}
+
+.about__grid {
+  display: grid;
+  grid-template-columns: 1.05fr 1.4fr;
+  gap: var(--s-7);
+  align-items: start;
+}
+
+.about__text-wrap { position: sticky; top: calc(var(--nav-h) + var(--s-5)); }
+
+.about__heading {
+  font-family: var(--f-display);
+  font-size: clamp(1.8rem, 3.5vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--c-text);
+  margin: var(--s-3) 0 var(--s-4);
+}
+.about__heading em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--c-accent-h);
+}
+
+.about__body {
+  font-family: var(--f-serif);
+  font-size: 1.08rem;
+  line-height: 1.8;
+  color: var(--c-text-sec);
+  margin-bottom: var(--s-4);
+  max-width: 480px;
+}
+
+.about__pillars { display: flex; flex-direction: column; gap: var(--s-3); }
+
+.about__pillars { gap: 0; }
+
+.about__pillar {
+  position: relative;
+  display: grid;
+  grid-template-columns: 56px 44px 1fr;
+  column-gap: var(--s-4);
+  row-gap: 4px;
+  align-items: baseline;
+  padding: var(--s-5) 0;
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--c-divider);
+  transition: padding-left var(--t-base);
+  overflow: visible;
+}
+.about__pillars > *:last-child .about__pillar { border-bottom: 1px solid var(--c-divider); }
+.about__pillar:hover { padding-left: var(--s-3); }
+
+.about__pillar-index {
+  position: static;
+  grid-row: span 2;
+  font-family: var(--f-display);
+  font-size: 1.7rem;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--c-accent);
+  align-self: start;
+  padding-top: 2px;
+}
+
+.about__pillar-icon {
+  grid-row: span 2;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--c-accent);
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  margin-top: 0;
+  align-self: start;
+}
+
+.about__pillar-label {
+  font-family: var(--f-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--c-text);
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.about__pillar-desc {
+  font-family: var(--f-serif);
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--c-text-sec);
+  margin: 0;
+  max-width: 540px;
+}
+
+@media (max-width: 900px) {
+  .about__grid { grid-template-columns: 1fr; gap: var(--s-5); }
+  .about__text-wrap { position: static; }
+}

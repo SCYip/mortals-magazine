@@ -1,0 +1,481 @@
+/* ============================================================
+   THE MORTALS — Blue & White Edition
+   Light, editorial palette: royal-blue accents on white paper.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600;700;900&display=swap');
+
+:root {
+  /* ---- Blue & White Palette ---- */
+  --c-bg:             #ffffff;    /* page paper */
+  --c-bg-deep:        #eef3fb;    /* pale-blue stripe (section alt) */
+  --c-bg-deeper:      #e4ecf8;    /* footer / deepest stripe */
+  --c-surface:        #f7fafe;    /* lifted surface */
+  --c-surface-alt:    #eef3fb;    /* alternating stripe */
+  --c-card:           #ffffff;    /* card */
+  --c-card-hover:     #f5f8fd;    /* card hover */
+
+  --c-accent:         #1e56b5;    /* royal blue — main accent */
+  --c-accent-h:       #2e6fd6;    /* brighter hover */
+  --c-accent-deep:    #153f86;    /* deep navy accent */
+  --c-accent-soft:    rgba(46, 111, 214, 0.10);
+  --c-accent-glow:    rgba(46, 111, 214, 0.20);
+
+  --c-text:           #0d1b3c;    /* near-black navy (body) */
+  --c-text-sec:       #2f3e60;    /* secondary */
+  --c-text-muted:     #5e6f91;    /* muted */
+  --c-text-faint:     #97a3bc;    /* faintest */
+
+  --c-border:         rgba(30, 86, 181, 0.14);
+  --c-border-h:       rgba(30, 86, 181, 0.32);
+  --c-divider:        rgba(30, 86, 181, 0.09);
+  --c-rule:           rgba(30, 86, 181, 0.28);
+
+  /* ---- Typography ---- */
+  --f-display: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  --f-serif:   'Crimson Pro', Georgia, serif;
+  --f-ui:      'Inter', system-ui, sans-serif;
+
+  /* ---- Spacing ---- */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  16px;
+  --s-4:  24px;
+  --s-5:  40px;
+  --s-6:  64px;
+  --s-7:  96px;
+  --s-8:  128px;
+
+  /* ---- Layout ---- */
+  --max:      1240px;
+  --max-wide: 1440px;
+  --max-read:  720px;
+  --nav-h:    76px;
+
+  /* ---- Motion ---- */
+  --t-fast:  180ms ease;
+  --t-base:  260ms ease;
+  --t-slow:  480ms ease;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---- Reset ---- */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-family: var(--f-serif);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  position: relative;
+}
+/* Paper grain — printed-page feel, fixed so it doesn't tile-shift on scroll */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  pointer-events: none;
+  opacity: 0.55;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.05  0 0 0 0 0.10  0 0 0 0 0.23  0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Soft blue wash near top of page — subtle atmospheric tint */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 1200px 600px at 50% -10%, rgba(46, 111, 214, 0.06), transparent 70%),
+    radial-gradient(ellipse 800px 500px at 100% 30%, rgba(46, 111, 214, 0.04), transparent 70%);
+}
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+input, textarea { font: inherit; color: inherit; }
+
+/* ---- Scrollbar ---- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--c-bg-deep); }
+::-webkit-scrollbar-thumb { background: rgba(30, 86, 181, 0.28); border-radius: 5px; border: 2px solid var(--c-bg-deep); }
+::-webkit-scrollbar-thumb:hover { background: rgba(30, 86, 181, 0.46); }
+
+::selection { background: rgba(46, 111, 214, 0.22); color: var(--c-text); }
+
+:focus-visible { outline: 2px solid var(--c-accent-h); outline-offset: 3px; border-radius: 2px; }
+
+/* ---- Typography ---- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--f-display);
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--c-text);
+  letter-spacing: -0.01em;
+}
+
+h1 { font-size: clamp(2.75rem, 6vw, 5rem); font-weight: 900; letter-spacing: -0.02em; }
+h2 { font-size: clamp(2rem, 3.5vw, 3.25rem); }
+h3 { font-size: clamp(1.375rem, 2.2vw, 1.875rem); }
+h4 { font-size: 1.25rem; }
+
+p { margin-bottom: 1.2em; }
+p:last-child { margin-bottom: 0; }
+
+/* ---- Layout ---- */
+.container { width: 100%; max-width: var(--max); margin: 0 auto; padding: 0 var(--s-4); }
+.container--wide { max-width: var(--max-wide); }
+.container--narrow { max-width: var(--max-read); }
+.section { padding: var(--s-7) 0; }
+.section--deep { background: var(--c-bg-deep); }
+.section--surface { background: var(--c-surface-alt); }
+
+/* ---- Editorial flourishes ---- */
+.overline {
+  display: inline-block;
+  font-family: var(--f-ui);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+  margin-bottom: var(--s-3);
+}
+
+.rule {
+  width: 56px;
+  height: 1px;
+  background: var(--c-rule);
+  margin: var(--s-3) 0;
+}
+.rule--center { margin: var(--s-3) auto; }
+
+.rule--ornate {
+  width: 120px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-rule) 25%, var(--c-accent) 50%, var(--c-rule) 75%, transparent);
+  margin: var(--s-4) auto;
+  position: relative;
+}
+.rule--ornate::before {
+  content: '❖';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--c-accent);
+  background: var(--c-bg);
+  padding: 0 var(--s-2);
+  font-size: 0.75rem;
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  padding: 14px 32px;
+  font-family: var(--f-ui);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  border-radius: 1px;
+  transition: all var(--t-base);
+  cursor: pointer;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.btn-primary {
+  background: var(--c-accent);
+  color: #fff;
+  border: 1px solid var(--c-accent);
+}
+.btn-primary:hover {
+  background: var(--c-accent-h);
+  border-color: var(--c-accent-h);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -10px rgba(30, 86, 181, 0.45);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--c-text);
+  border: 1px solid var(--c-border-h);
+}
+.btn-ghost:hover {
+  border-color: var(--c-accent);
+  color: var(--c-accent);
+  background: var(--c-accent-soft);
+  transform: translateY(-2px);
+}
+
+.btn-text {
+  padding: 6px 0;
+  color: var(--c-accent);
+  background: none;
+  border: none;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  position: relative;
+}
+.btn-text::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 1px; width: 100%;
+  background: var(--c-accent);
+  transform: scaleX(0.5);
+  transform-origin: left;
+  transition: transform var(--t-base);
+}
+.btn-text:hover::after { transform: scaleX(1); }
+
+.btn-sm { padding: 10px 20px; font-size: 0.72rem; }
+.btn-lg { padding: 18px 42px; font-size: 0.85rem; }
+
+/* ---- Tag ---- */
+.tag {
+  display: inline-block;
+  font-family: var(--f-ui);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--c-accent);
+  padding: 5px 12px;
+  border: 1px solid var(--c-border-h);
+  border-radius: 1px;
+  background: var(--c-accent-soft);
+}
+
+/* ---- Card ---- */
+.card {
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  transition: all var(--t-base);
+  box-shadow: 0 1px 2px rgba(13, 27, 60, 0.04);
+}
+.card:hover {
+  border-color: var(--c-border-h);
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px -18px rgba(13, 27, 60, 0.18);
+}
+
+/* ---- Reveal animation ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out);
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ---- Prose ---- */
+.prose {
+  font-family: var(--f-serif);
+  font-size: 1.18rem;
+  line-height: 1.85;
+  color: var(--c-text-sec);
+  max-width: var(--max-read);
+}
+.prose p { margin-bottom: 1.5em; }
+.prose p:first-of-type::first-letter {
+  font-family: var(--f-display);
+  font-size: 4rem;
+  font-weight: 700;
+  float: left;
+  line-height: 1;
+  padding: 0.1em 0.1em 0 0;
+  color: var(--c-accent);
+}
+.prose em { font-style: italic; }
+.prose strong { color: var(--c-text); font-weight: 600; }
+.prose blockquote {
+  border-left: 2px solid var(--c-accent);
+  padding: var(--s-2) var(--s-4);
+  margin: var(--s-5) 0;
+  color: var(--c-text);
+  font-style: italic;
+  font-size: 1.25rem;
+  font-family: var(--f-display);
+}
+
+/* ---- Links in text ---- */
+a.link {
+  color: var(--c-accent);
+  border-bottom: 1px solid rgba(30, 86, 181, 0.30);
+  transition: color var(--t-fast), border-color var(--t-fast);
+}
+a.link:hover { color: var(--c-accent-deep); border-bottom-color: var(--c-accent); }
+
+/* ============================================================
+   Editorial primitives — magazine-spread typography helpers
+   ============================================================ */
+
+/* Section folio mark — used between major sections like a magazine */
+.folio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-4);
+  padding: var(--s-5) 0 var(--s-4);
+  font-family: var(--f-ui);
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+}
+.folio__rule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-rule), transparent);
+  max-width: 240px;
+}
+.folio__numeral {
+  font-family: var(--f-display);
+  font-size: 1rem;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--c-accent);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.folio__diamond {
+  width: 6px; height: 6px;
+  background: var(--c-accent);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* Kicker — small italic line that introduces a heading */
+.kicker {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.02rem;
+  color: var(--c-accent);
+  letter-spacing: 0.01em;
+  margin-bottom: var(--s-2);
+}
+
+/* Colophon — magazine-style key/value list separated by leader dots */
+.colophon {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: var(--s-3) 0;
+  border-top: 1px solid var(--c-divider);
+  border-bottom: 1px solid var(--c-divider);
+}
+.colophon__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-family: var(--f-ui);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+}
+.colophon__key {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+  font-size: 0.62rem;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+}
+.colophon__leader {
+  flex: 1;
+  border-bottom: 1px dotted var(--c-rule);
+  transform: translateY(-3px);
+  min-width: 24px;
+}
+.colophon__val {
+  color: var(--c-text);
+  font-family: var(--f-serif);
+  font-size: 0.96rem;
+  font-style: italic;
+}
+
+/* Fine rule — for typographic dividers inside sections */
+.fine-rule {
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--c-divider) 20%, var(--c-divider) 80%, transparent);
+}
+
+/* Vertical writing — for margin folios */
+.vertical-mark {
+  font-family: var(--f-ui);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+/* Editorial arrow link — replaces uppercase brick CTAs in body copy */
+.ed-link {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--f-display);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: var(--c-accent);
+  border-bottom: 1px solid var(--c-accent);
+  padding-bottom: 2px;
+  transition: gap var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+}
+.ed-link::after {
+  content: '→';
+  font-style: normal;
+  transition: transform var(--t-fast);
+}
+.ed-link:hover { gap: 12px; color: var(--c-accent-deep); border-color: var(--c-accent-deep); }
+.ed-link:hover::after { transform: translateX(2px); }
+
+/* Pull-quote — magazine-style large italic with rule */
+.pullquote {
+  font-family: var(--f-display);
+  font-style: italic;
+  font-size: clamp(1.4rem, 2.4vw, 2rem);
+  line-height: 1.35;
+  color: var(--c-text);
+  padding: var(--s-4) 0;
+  position: relative;
+  max-width: 720px;
+}
+.pullquote::before {
+  content: '';
+  display: block;
+  width: 48px;
+  height: 2px;
+  background: var(--c-accent);
+  margin-bottom: var(--s-3);
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 960px) {
+  :root { --nav-h: 68px; }
+  .section { padding: var(--s-6) 0; }
+  .prose { font-size: 1.08rem; }
+}
+@media (max-width: 600px) {
+  .container { padding: 0 var(--s-3); }
+  .section { padding: var(--s-5) 0; }
+  .btn { padding: 12px 24px; font-size: 0.72rem; }
+  .prose p:first-of-type::first-letter { font-size: 3rem; }
+  .folio__rule { max-width: 80px; }
+}
