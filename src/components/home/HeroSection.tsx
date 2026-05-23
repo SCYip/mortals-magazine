@@ -3,10 +3,12 @@ import { ArrowRight } from 'lucide-react'
 import './HeroSection.css'
 
 const SLIDES = [
-  '/images/hero_slide_1.jpg',
+  // Editor-supplied rotation imagery (PageDesign/HomePage_Rotation*)
+  '/images/hero_rotation_1.jpg',
+  '/images/hero_rotation_2.jpg',
+  // Existing campus photography (kept for variety)
   '/images/hero_slide_2.jpg',
   '/images/hero_slide_3.jpg',
-  '/images/hero_slide_4.jpg',
   '/images/hero_slide_5.jpg',
 ]
 

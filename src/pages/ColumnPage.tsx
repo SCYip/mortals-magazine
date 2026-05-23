@@ -18,7 +18,10 @@ export default function ColumnPage() {
       <div className="column-page__header">
         <div
           className="column-page__header-bg"
-          style={{ '--col-color': column.color } as React.CSSProperties}
+          style={{
+            '--col-color': column.color,
+            '--col-image': column.imageUrl ? `url(${column.imageUrl})` : 'none',
+          } as React.CSSProperties}
         />
         <div className="container">
           <Reveal>

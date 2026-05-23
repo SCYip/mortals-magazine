@@ -39,14 +39,10 @@ export default function EventsContestsPage() {
           <Reveal delay={100}>
             <div className="event-section__card">
               <div className="event-section__card-left">
-                <div className="event-section__img-placeholder event-section__img-placeholder--workshop">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.3">
-                    <circle cx="12" cy="12" r="10"/>
-                    <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
-                    <line x1="9" y1="9" x2="9.01" y2="9"/>
-                    <line x1="15" y1="9" x2="15.01" y2="9"/>
-                  </svg>
-                </div>
+                <figure className="event-section__photo">
+                  <img src="/images/event_workshop.jpg" alt="BIPH Writers' Workshop" loading="lazy" />
+                  <figcaption className="event-section__photo-caption">BIPH · Writers' Workshop</figcaption>
+                </figure>
               </div>
               <div className="event-section__card-right">
                 <h3 className="event-section__card-title">A Celebration of Literary Creativity</h3>
@@ -107,6 +103,16 @@ export default function EventsContestsPage() {
           <Reveal delay={100}>
             <div className="event-section__card event-section__card--reverse">
               <div className="event-section__card-left">
+                <div className="event-section__photo-pair">
+                  <figure className="event-section__photo event-section__photo--small">
+                    <img src="/images/event_writing_course.jpg" alt="Writing Course in session" loading="lazy" />
+                    <figcaption className="event-section__photo-caption">Writing Course</figcaption>
+                  </figure>
+                  <figure className="event-section__photo event-section__photo--small">
+                    <img src="/images/event_apprenticeship.jpg" alt="Apprenticeship mentorship session" loading="lazy" />
+                    <figcaption className="event-section__photo-caption">Apprenticeship</figcaption>
+                  </figure>
+                </div>
                 <div className="event-section__stats-grid">
                   {[
                     { num: '6', label: 'Module Courses' },
@@ -172,12 +178,10 @@ export default function EventsContestsPage() {
           <Reveal delay={100}>
             <div className="event-section__card">
               <div className="event-section__card-left">
-                <div className="event-section__img-placeholder event-section__img-placeholder--contest">
-                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.3">
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                  </svg>
-                  <div className="event-section__img-sub">Submit · Create · Pledge</div>
-                </div>
+                <figure className="event-section__photo">
+                  <img src="/images/event_writing_contest.jpg" alt="Annual Writing Contest" loading="lazy" />
+                  <figcaption className="event-section__photo-caption">Annual · Writing Contest</figcaption>
+                </figure>
               </div>
               <div className="event-section__card-right">
                 <h3 className="event-section__card-title">Where Creativity Meets Debate, and Imagination Finds Its Voice</h3>

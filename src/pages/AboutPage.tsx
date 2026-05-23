@@ -13,6 +13,33 @@ const team = [
   { name: 'Tracy Shao Weiqi', role: 'Staff Writer', class: "'25", school: 'BIBWH' },
 ]
 
+const alumni = [
+  {
+    name: 'Timmy Zhang',
+    role: 'Co-Editor in Chief, Vol. I',
+    class: "'25",
+    school: 'BIPH',
+    portrait: '/images/alumni/timmy.jpeg',
+    note: "Helped found The Mortals and edited the inaugural volume. Now studying abroad — but his fingerprints are on every page that came before.",
+  },
+  {
+    name: 'Ares',
+    role: 'Founding Contributor',
+    class: "'25",
+    school: 'BIPH',
+    portrait: '/images/alumni/ares.jpeg',
+    note: "Early staff writer who set the tone for the magazine's voice in fiction and poetry.",
+  },
+  {
+    name: 'Thomas',
+    role: 'Founding Contributor',
+    class: "'25",
+    school: 'BIPH',
+    portrait: '/images/alumni/thomas.jpeg',
+    note: "Editorial board alumnus whose work spans nonfiction essays and the magazine's earliest design decisions.",
+  },
+]
+
 const acknowledgements = [
   { name: 'Mr. Dust', role: 'Advisor & Mentor', note: 'Improving our ideas with concrete actions and constructive feedback' },
   { name: 'Mr. Huizinga', role: 'Proofreader', note: 'Proofreading our drafts from start to end; mentor to all three student magazine editors' },
@@ -97,6 +124,39 @@ export default function AboutPage() {
                     <span className="about-page__member-class">{member.school} {member.class}</span>
                   </div>
                 </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Alumni */}
+      <section className="about-page__alumni section">
+        <div className="container">
+          <Reveal>
+            <div className="about-page__section-header">
+              <span className="overline">Past Voices</span>
+              <h2>Alumni</h2>
+              <p className="about-page__alumni-lede">
+                Editors and contributors who shaped the magazine in its earliest years and have since carried it
+                with them into universities, careers, and the wider world.
+              </p>
+            </div>
+          </Reveal>
+          <div className="about-page__alumni-grid">
+            {alumni.map((person, i) => (
+              <Reveal key={person.name} delay={i * 90}>
+                <article className="about-page__alum">
+                  <div className="about-page__alum-portrait">
+                    <img src={person.portrait} alt={person.name} loading="lazy" />
+                  </div>
+                  <div className="about-page__alum-info">
+                    <h3 className="about-page__alum-name">{person.name}</h3>
+                    <span className="about-page__alum-role">{person.role}</span>
+                    <span className="about-page__alum-class">{person.school} &middot; {person.class}</span>
+                    <p className="about-page__alum-note">{person.note}</p>
+                  </div>
+                </article>
               </Reveal>
             ))}
           </div>
