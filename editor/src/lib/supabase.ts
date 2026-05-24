@@ -8,17 +8,31 @@ if (!url || !anonKey) {
   console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
 }
 
+// In-memory mutex used in place of supabase-js's default navigator.locks.
+// Two goals:
+//   1. Never touch navigator.locks. We've been bitten by leaked locks from
+//      a previous tab that died without releasing — every getSession() then
+//      hangs forever.
+//   2. Still serialize concurrent refreshes. supabase-js fires an
+//      autoRefreshTick every 10 seconds, and if that races with one of our
+//      data fetches both can read/write the persisted token at the same
+//      time and corrupt it (symptom: content stops loading ~10 s after
+//      page load). A simple promise chain forces sequential execution.
+let lockChain: Promise<unknown> = Promise.resolve()
+const memoryLock = <R,>(_name: string, _timeoutMs: number, fn: () => Promise<R>): Promise<R> => {
+  const next = lockChain.then(() => fn())
+  // Swallow errors on the chain itself so one failed refresh doesn't
+  // poison every subsequent acquisition. Callers still see the rejection.
+  lockChain = next.catch(() => undefined)
+  return next as Promise<R>
+}
+
 export const supabase = createClient(url, anonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    // Bypass the default navigatorLock used by supabase-js for cross-tab
-    // session-refresh coordination. We've seen leaked locks (from a
-    // previous tab that died without releasing) block every subsequent
-    // getSession() call indefinitely. The editor is a single-page tool
-    // — no multi-tab refresh races to coordinate.
-    lock: async (_name, _timeout, fn) => await fn(),
+    lock: memoryLock,
   },
 })
 
