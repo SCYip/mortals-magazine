@@ -120,11 +120,23 @@ export default function EditorsPanel() {
       setMessage({ kind: 'err', text: 'Cannot delete a chief account directly. Demote first.' })
       return
     }
-    if (!confirm(`Revoke ${p.email}'s access?`)) return
-    const { error } = await supabase.from('profiles').delete().eq('user_id', p.user_id)
-    if (error) { setMessage({ kind: 'err', text: error.message }); return }
-    setMessage({ kind: 'ok', text: `${p.email} removed.` })
-    refetch()
+    if (!confirm(`Revoke ${p.email}'s access? This permanently deletes their account.`)) return
+    setMessage(null)
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Not signed in')
+      const resp = await fetch('/.netlify/functions/delete-editor', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ user_id: p.user_id }),
+      })
+      const body = await resp.json().catch(() => ({}))
+      if (!resp.ok || !body?.ok) throw new Error(body?.error ?? `Delete failed: ${resp.status}`)
+      setMessage({ kind: 'ok', text: `${p.email} removed.` })
+      refetch()
+    } catch (err: any) {
+      setMessage({ kind: 'err', text: err?.message ?? 'Failed to delete editor' })
+    }
   }
 
   return (
