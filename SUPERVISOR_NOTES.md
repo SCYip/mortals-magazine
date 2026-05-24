@@ -72,6 +72,28 @@ Fixes:
 
 I also rescued the two orphaned auth.users records that existed in the DB.
 
+### 3e. THE REAL ROOT CAUSE — synchronous storage hydration (5fff92b)
+
+Earlier "root cause" fixes (3c, 3d) helped but missed the actual bug.
+Caught it by screenshotting the live editor in my browser:
+
+1. Hard refresh / new tab on /articles
+2. AuthProvider mounts: `session=null, loading=true`
+3. `supabase.auth.getSession()` fires — on cross-border China latency
+   it takes >4 s to resolve
+4. The 4-second safety timer fires FIRST, setting `loading=false`
+   WITHOUT setting session
+5. `Protected` sees `session=null, loading=false` → Navigate to `/login`
+6. User stares at the login form while a valid session sits in
+   localStorage with 50+ minutes to expiry
+
+The fix: read `sb-<ref>-auth-token` from `localStorage` synchronously
+in `useState`'s lazy initializer. AuthProvider now mounts with the
+persisted session ALREADY set — the panel renders on first paint,
+no Loading flash, no /login redirect. The async `getSession()` runs
+in the background and either confirms (no-op) or refines via
+`onAuthStateChange`. The harmful safety timer is gone.
+
 ### 3d. ROOT-CAUSE FIX — silent background refetch (fe530f3)
 
 After 3c shipped, you came back with "still the fucking same problem."
