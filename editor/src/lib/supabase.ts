@@ -16,6 +16,32 @@ const T0 = Date.now()
 const t = () => `${((Date.now() - T0) / 1000).toFixed(1)}s`
 const dbg = (...args: unknown[]) => console.log('[mortals]', t(), ...args)
 
+// One-shot safety net: if there's already a navigator-lock held for
+// our Supabase auth-token key at module load, it can only be from a
+// previous tab/bundle that crashed or never released. Steal it so
+// supabase-js can acquire it fresh. This runs BEFORE createClient
+// below — no re-entry into supabase-js's own lock management, so it
+// can't cause the leak it's trying to clear.
+const projectRef = url?.match(/https:\/\/([a-z0-9]+)\./)?.[1]
+const lockName = projectRef ? `lock:sb-${projectRef}-auth-token` : null
+if (lockName && typeof navigator !== 'undefined' && navigator.locks?.request) {
+  ;(async () => {
+    try {
+      const available = await navigator.locks.request<boolean>(
+        lockName,
+        { ifAvailable: true },
+        (lock) => lock !== null,
+      )
+      if (available === false) {
+        console.warn('[mortals] stale auth lock detected at module load — stealing')
+        await navigator.locks.request(lockName, { steal: true }, async () => undefined)
+      }
+    } catch (err: any) {
+      console.warn('[mortals] lock-cleanup failed:', err?.message ?? err)
+    }
+  })()
+}
+
 export const supabase = createClient(url, anonKey, {
   auth: {
     persistSession: true,
