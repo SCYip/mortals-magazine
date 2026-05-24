@@ -4,6 +4,7 @@ import { Plus, Edit3, Trash2, Eye, EyeOff, ArrowLeft, Upload } from 'lucide-reac
 import { supabase, uploadImage } from '../lib/supabase'
 import type { ArticleRow, ColumnRow, Genre } from '../lib/types'
 import ImageStrip, { extractImagesFromContent, resolveImageUrl } from '../components/ImageStrip'
+import { useTabRefocus } from '../lib/useTabRefocus'
 
 const GENRES: { value: Genre; label: string }[] = [
   { value: 'nonfiction', label: 'Nonfiction' },
@@ -46,6 +47,7 @@ function ArticlesList() {
     }
   }
   useEffect(() => { refetch() }, [])
+  useTabRefocus(refetch)
 
   const filtered = rows.filter(r =>
     !q || [r.title, r.author, r.slug].join(' ').toLowerCase().includes(q.toLowerCase())

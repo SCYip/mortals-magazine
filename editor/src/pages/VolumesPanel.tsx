@@ -3,6 +3,7 @@ import { Plus, Trash2, Save } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { VolumeRow, IssueRow } from '../lib/types'
 import ImageStrip, { resolveImageUrl } from '../components/ImageStrip'
+import { useTabRefocus } from '../lib/useTabRefocus'
 
 function slugify(s: string) {
   return s.toLowerCase().replace(/['"]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80)
@@ -33,6 +34,7 @@ export default function VolumesPanel() {
     }
   }
   useEffect(() => { refetch() }, [])
+  useTabRefocus(refetch)
 
   const save = async (e: FormEvent) => {
     e.preventDefault()

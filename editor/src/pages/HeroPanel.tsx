@@ -3,6 +3,7 @@ import { Plus, Trash2, Upload, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-re
 import { supabase, uploadImage } from '../lib/supabase'
 import type { HeroSlideRow } from '../lib/types'
 import { resolveImageUrl } from '../components/ImageStrip'
+import { useTabRefocus } from '../lib/useTabRefocus'
 
 export default function HeroPanel() {
   const [rows, setRows] = useState<HeroSlideRow[]>([])
@@ -23,6 +24,7 @@ export default function HeroPanel() {
     }
   }
   useEffect(() => { refetch() }, [])
+  useTabRefocus(refetch)
 
   const onUpload = async (file: File) => {
     setBusy(true)

@@ -3,6 +3,7 @@ import { Plus, Trash2, Save, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { TeamMemberRow, AlumRow } from '../lib/types'
 import ImageStrip, { resolveImageUrl } from '../components/ImageStrip'
+import { useTabRefocus } from '../lib/useTabRefocus'
 
 type Tab = 'team' | 'alumni'
 
@@ -40,6 +41,7 @@ function TeamSection() {
     }
   }
   useEffect(() => { refetch() }, [])
+  useTabRefocus(refetch)
   const save = async (e: FormEvent) => {
     e.preventDefault()
     if (!editing) return
@@ -119,6 +121,7 @@ function AlumniSection() {
     }
   }
   useEffect(() => { refetch() }, [])
+  useTabRefocus(refetch)
   const save = async (e: FormEvent) => {
     e.preventDefault()
     if (!editing) return
