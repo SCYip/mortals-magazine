@@ -8,6 +8,10 @@ if (!url || !anonKey) {
   console.error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY')
 }
 
+const T0 = Date.now()
+const t = () => `${((Date.now() - T0) / 1000).toFixed(1)}s`
+const dbg = (...args: unknown[]) => console.log('[mortals]', t(), ...args)
+
 // In-memory mutex used in place of supabase-js's default navigator.locks.
 // Two goals:
 //   1. Never touch navigator.locks. We've been bitten by leaked locks from
@@ -18,14 +22,40 @@ if (!url || !anonKey) {
 //      data fetches both can read/write the persisted token at the same
 //      time and corrupt it (symptom: content stops loading ~10 s after
 //      page load). A simple promise chain forces sequential execution.
+//
+// Each acquire/release is also logged so a stuck-forever chain is
+// observable in production.
 let lockChain: Promise<unknown> = Promise.resolve()
-const memoryLock = <R,>(_name: string, _timeoutMs: number, fn: () => Promise<R>): Promise<R> => {
-  const next = lockChain.then(() => fn())
-  // Swallow errors on the chain itself so one failed refresh doesn't
-  // poison every subsequent acquisition. Callers still see the rejection.
+let lockSeq = 0
+const memoryLock = <R,>(name: string, _timeoutMs: number, fn: () => Promise<R>): Promise<R> => {
+  const id = ++lockSeq
+  dbg('lock.acquire', id, name)
+  const next = lockChain.then(() => fn()).then(
+    v => { dbg('lock.release.ok', id); return v },
+    e => { dbg('lock.release.err', id, String(e?.message ?? e).slice(0, 200)); throw e },
+  )
   lockChain = next.catch(() => undefined)
   return next as Promise<R>
 }
+
+// Wrap fetch to time every Supabase REST/Auth call. This is the single
+// best diagnostic when "content stops loading" — we see which request
+// hangs or returns a non-2xx response.
+const origFetch = window.fetch.bind(window)
+window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+  const reqUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
+  if (!reqUrl.includes('supabase.co')) return origFetch(input, init)
+  const path = reqUrl.replace(/^https?:\/\/[^/]+/, '').slice(0, 80)
+  const start = Date.now()
+  dbg('fetch.start', path)
+  return origFetch(input, init).then(
+    r => { dbg('fetch.done', path, r.status, `${Date.now() - start}ms`); return r },
+    e => { dbg('fetch.fail', path, `${Date.now() - start}ms`, String(e?.message ?? e).slice(0, 200)); throw e },
+  )
+}) as typeof window.fetch
+
+window.addEventListener('error', e => dbg('window.error', String(e.message).slice(0, 200)))
+window.addEventListener('unhandledrejection', e => dbg('window.rejection', String(e.reason?.message ?? e.reason).slice(0, 200)))
 
 export const supabase = createClient(url, anonKey, {
   auth: {
@@ -34,6 +64,10 @@ export const supabase = createClient(url, anonKey, {
     detectSessionInUrl: true,
     lock: memoryLock,
   },
+})
+
+supabase.auth.onAuthStateChange((event, session) => {
+  dbg('auth.state', event, session ? `user=${session.user.email}` : 'no-session', session ? `exp=${session.expires_at}` : '')
 })
 
 export const BUCKETS = {
