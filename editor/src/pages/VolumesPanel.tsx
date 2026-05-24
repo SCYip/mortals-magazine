@@ -1,0 +1,141 @@
+import { useEffect, useState, FormEvent } from 'react'
+import { Plus, Trash2, Save } from 'lucide-react'
+import { supabase, uploadImage } from '../lib/supabase'
+import type { VolumeRow, IssueRow } from '../lib/types'
+
+function slugify(s: string) {
+  return s.toLowerCase().replace(/['"]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80)
+}
+
+export default function VolumesPanel() {
+  const [volumes, setVolumes] = useState<VolumeRow[]>([])
+  const [issues, setIssues] = useState<IssueRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [editing, setEditing] = useState<Partial<VolumeRow> | null>(null)
+
+  const refetch = async () => {
+    setLoading(true)
+    const [vs, is_] = await Promise.all([
+      supabase.from('volumes').select('*').order('sort_order'),
+      supabase.from('issues').select('*').order('sort_order'),
+    ])
+    setVolumes((vs.data as VolumeRow[]) ?? [])
+    setIssues((is_.data as IssueRow[]) ?? [])
+    setLoading(false)
+  }
+  useEffect(() => { refetch() }, [])
+
+  const save = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!editing) return
+    const payload: Partial<VolumeRow> = {
+      slug: editing.slug || slugify(editing.title ?? ''),
+      title: editing.title ?? '',
+      season: editing.season ?? '',
+      year: editing.year ?? '',
+      theme: editing.theme ?? '',
+      image_url: editing.image_url ?? '',
+      sort_order: editing.sort_order ?? volumes.length,
+    }
+    const { error } = await supabase.from('volumes').upsert(payload, { onConflict: 'slug' })
+    if (error) { alert(error.message); return }
+    setEditing(null)
+    refetch()
+  }
+  const remove = async (slug: string) => {
+    if (!confirm(`Delete volume ${slug}? Issues will also be deleted.`)) return
+    await supabase.from('volumes').delete().eq('slug', slug)
+    refetch()
+  }
+
+  const onUpload = async (file: File) => {
+    const url = await uploadImage('volume', file)
+    setEditing(s => s ? { ...s, image_url: url } : s)
+  }
+
+  return (
+    <div className="panel">
+      <div className="panel__head">
+        <div>
+          <h1 className="panel__title">Volumes &amp; Issues</h1>
+          <p className="panel__sub">{volumes.length} volumes · {issues.length} issues</p>
+        </div>
+        <button className="btn btn--primary" onClick={() => setEditing({})}>
+          <Plus size={14} /> New volume
+        </button>
+      </div>
+
+      {loading && <div className="panel__loading">Loading…</div>}
+
+      <div className="cards">
+        {volumes.map(v => {
+          const vIssues = issues.filter(i => i.volume_slug === v.slug)
+          return (
+            <div key={v.slug} className="card">
+              {v.image_url && <img src={v.image_url} alt="" className="card__img" />}
+              <div className="card__body">
+                <div className="card__meta">{v.season} · {v.year}</div>
+                <div className="card__title">{v.title}</div>
+                <div className="card__sub">{v.theme}</div>
+                <div className="card__sub">{vIssues.length} issue{vIssues.length === 1 ? '' : 's'}</div>
+                <div className="card__actions">
+                  <button className="icon-btn" onClick={() => setEditing(v)}>Edit</button>
+                  <button className="icon-btn icon-btn--danger" onClick={() => remove(v.slug)}><Trash2 size={14} /></button>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {editing && (
+        <div className="modal" onClick={() => setEditing(null)}>
+          <form className="modal__card" onClick={e => e.stopPropagation()} onSubmit={save}>
+            <h2 className="modal__title">{editing.slug ? 'Edit volume' : 'New volume'}</h2>
+            <label className="form__field">
+              <span>Title *</span>
+              <input required value={editing.title ?? ''} onChange={e => setEditing(s => ({ ...s!, title: e.target.value }))} />
+            </label>
+            <div className="form__row form__row--two">
+              <label className="form__field">
+                <span>Slug</span>
+                <input value={editing.slug ?? ''} onChange={e => setEditing(s => ({ ...s!, slug: slugify(e.target.value) }))} placeholder="auto from title" />
+              </label>
+              <label className="form__field">
+                <span>Sort order</span>
+                <input type="number" value={editing.sort_order ?? 0} onChange={e => setEditing(s => ({ ...s!, sort_order: Number(e.target.value) }))} />
+              </label>
+            </div>
+            <div className="form__row form__row--two">
+              <label className="form__field">
+                <span>Season *</span>
+                <input required value={editing.season ?? ''} onChange={e => setEditing(s => ({ ...s!, season: e.target.value }))} placeholder="Winter" />
+              </label>
+              <label className="form__field">
+                <span>Year *</span>
+                <input required value={editing.year ?? ''} onChange={e => setEditing(s => ({ ...s!, year: e.target.value }))} placeholder="2025-2026" />
+              </label>
+            </div>
+            <label className="form__field">
+              <span>Theme</span>
+              <input value={editing.theme ?? ''} onChange={e => setEditing(s => ({ ...s!, theme: e.target.value }))} />
+            </label>
+            <div className="form__field">
+              <span>Cover image</span>
+              <div className="upload">
+                {editing.image_url && <img src={editing.image_url} alt="" className="upload__preview" />}
+                <label className="upload__btn">
+                  Upload <input type="file" accept="image/*" hidden onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
+                </label>
+              </div>
+            </div>
+            <div className="form__actions">
+              <button type="button" className="btn btn--ghost" onClick={() => setEditing(null)}>Cancel</button>
+              <button type="submit" className="btn btn--primary"><Save size={14} /> Save</button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  )
+}

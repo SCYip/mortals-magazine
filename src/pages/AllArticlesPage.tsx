@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Search, X } from 'lucide-react'
-import { articles } from '../data/articles'
+import { useArticles } from '../data/hooks'
 import ArticleCard from '../components/articles/ArticleCard'
 import Reveal from '../components/ui/Reveal'
 import './AllArticlesPage.css'
@@ -22,6 +22,7 @@ export default function AllArticlesPage() {
   const [activeGenre, setActiveGenre] = useState('all')
   const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
   const [page, setPage] = useState(1)
+  const { articles } = useArticles()
 
   // Keep URL ?q= in sync with the query so the search is shareable & survives refresh
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function AllArticlesPage() {
       ].join(' ').toLowerCase()
       return haystack.includes(q)
     })
-  }, [activeGenre, query])
+  }, [activeGenre, query, articles])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)

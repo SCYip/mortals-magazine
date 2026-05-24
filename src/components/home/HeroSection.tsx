@@ -1,35 +1,28 @@
 import { useState, useEffect } from 'react'
 import { ArrowRight } from 'lucide-react'
+import { useHeroSlides } from '../../data/hooks'
 import './HeroSection.css'
-
-const SLIDES = [
-  // Editor-supplied rotation imagery (PageDesign/HomePage_Rotation*)
-  '/images/hero_rotation_1.jpg',
-  '/images/hero_rotation_2.jpg',
-  // Existing campus photography (kept for variety)
-  '/images/hero_slide_2.jpg',
-  '/images/hero_slide_3.jpg',
-  '/images/hero_slide_5.jpg',
-]
 
 const INTERVAL = 6000
 
 export default function HeroSection() {
+  const { slides } = useHeroSlides()
   const [active, setActive] = useState(0)
 
   useEffect(() => {
-    const id = setInterval(() => setActive(a => (a + 1) % SLIDES.length), INTERVAL)
+    if (slides.length === 0) return
+    const id = setInterval(() => setActive(a => (a + 1) % slides.length), INTERVAL)
     return () => clearInterval(id)
-  }, [])
+  }, [slides.length])
 
   return (
     <section className="hero">
       <div className="hero__bg" aria-hidden="true">
-        {SLIDES.map((src, i) => (
+        {slides.map((slide, i) => (
           <div
-            key={src}
+            key={slide.id}
             className={`hero__slide ${i === active ? 'is-active' : ''}`}
-            style={{ backgroundImage: `url(${src})` }}
+            style={{ backgroundImage: `url(${slide.imageUrl})` }}
           />
         ))}
         <div className="hero__veil" />
@@ -113,7 +106,7 @@ export default function HeroSection() {
 
       <div className="hero__dock">
         <div className="hero__dots" role="tablist" aria-label="Background slides">
-          {SLIDES.map((_, i) => (
+          {slides.map((_, i) => (
             <button
               key={i}
               role="tab"
