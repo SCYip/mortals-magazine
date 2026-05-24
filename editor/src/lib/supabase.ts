@@ -9,7 +9,17 @@ if (!url || !anonKey) {
 }
 
 export const supabase = createClient(url, anonKey, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    // Bypass the default navigatorLock used by supabase-js for cross-tab
+    // session-refresh coordination. We've seen leaked locks (from a
+    // previous tab that died without releasing) block every subsequent
+    // getSession() call indefinitely. The editor is a single-page tool
+    // — no multi-tab refresh races to coordinate.
+    lock: async (_name, _timeout, fn) => await fn(),
+  },
 })
 
 export const BUCKETS = {
