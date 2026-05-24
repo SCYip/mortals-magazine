@@ -1,5 +1,10 @@
 import type { Context } from '@netlify/functions'
 import { createClient } from '@supabase/supabase-js'
+// supabase-js eagerly probes for a global WebSocket during client
+// construction. Node < 22 doesn't ship one, so we hand it the `ws`
+// polyfill explicitly to avoid "Node.js 20 detected without native
+// WebSocket support" crashing the function at module load.
+import ws from 'ws'
 
 /**
  * POST /.netlify/functions/create-editor
@@ -48,6 +53,7 @@ export default async (req: Request, _ctx: Context): Promise<Response> => {
   // 2. Verify the token by asking Supabase Auth who the user is.
   const anonClient = createClient(SUPABASE_URL, ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { transport: ws as any },
   })
   const { data: userData, error: userErr } = await anonClient.auth.getUser(token)
   if (userErr || !userData?.user) return json(401, { error: 'Invalid token' })
@@ -55,6 +61,7 @@ export default async (req: Request, _ctx: Context): Promise<Response> => {
   // 3. Look up the caller's role via the service-role client (bypasses RLS).
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE, {
     auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { transport: ws as any },
   })
   const { data: profile, error: profileErr } = await adminClient
     .from('profiles')
