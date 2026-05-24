@@ -1,22 +1,30 @@
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
-import { LogOut, FileText, BookOpen, Image as ImageIcon, Users } from 'lucide-react'
+import { LogOut, FileText, BookOpen, Image as ImageIcon, Users, Crown } from 'lucide-react'
 import { useAuth } from './lib/auth'
+import { useRole } from './lib/role'
 import LoginPage from './pages/LoginPage'
 import ArticlesPanel from './pages/ArticlesPanel'
 import VolumesPanel from './pages/VolumesPanel'
 import HeroPanel from './pages/HeroPanel'
 import TeamAlumniPanel from './pages/TeamAlumniPanel'
+import EditorsPanel from './pages/EditorsPanel'
 
-const NAV = [
+const BASE_NAV = [
   { to: '/articles',   label: 'Articles',       icon: FileText },
   { to: '/volumes',    label: 'Volumes',        icon: BookOpen },
   { to: '/hero',       label: 'Hero rotation',  icon: ImageIcon },
   { to: '/people',     label: 'Team & Alumni',  icon: Users },
-]
+] as const
+
+const CHIEF_NAV = [
+  { to: '/editors',    label: 'Editors',        icon: Crown },
+] as const
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { session, signOut } = useAuth()
+  const { isChief } = useRole()
   const location = useLocation()
+  const nav = isChief ? [...BASE_NAV, ...CHIEF_NAV] : BASE_NAV
   return (
     <div className="shell">
       <aside className="shell__aside">
@@ -25,7 +33,7 @@ function Shell({ children }: { children: React.ReactNode }) {
           <div className="shell__brand-sub">Editor Panel</div>
         </div>
         <nav className="shell__nav">
-          {NAV.map(item => {
+          {nav.map(item => {
             const Icon = item.icon
             const active = location.pathname.startsWith(item.to)
             return (
@@ -37,7 +45,10 @@ function Shell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="shell__foot">
-          <div className="shell__user">{session?.user.email}</div>
+          <div className="shell__user">
+            {session?.user.email}
+            {isChief && <span className="shell__user-badge"><Crown size={10} /> Chief</span>}
+          </div>
           <button className="shell__signout" onClick={signOut}>
             <LogOut size={14} /> Sign out
           </button>
@@ -64,6 +75,7 @@ export default function App() {
       <Route path="/volumes/*" element={<Protected><VolumesPanel /></Protected>} />
       <Route path="/hero" element={<Protected><HeroPanel /></Protected>} />
       <Route path="/people" element={<Protected><TeamAlumniPanel /></Protected>} />
+      <Route path="/editors" element={<Protected><EditorsPanel /></Protected>} />
       <Route path="*" element={<Navigate to="/articles" replace />} />
     </Routes>
   )

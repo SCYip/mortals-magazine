@@ -2,6 +2,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { VolumeRow, IssueRow } from '../lib/types'
+import ImageStrip from '../components/ImageStrip'
 
 function slugify(s: string) {
   return s.toLowerCase().replace(/['"]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80)
@@ -71,13 +72,16 @@ export default function VolumesPanel() {
         {volumes.map(v => {
           const vIssues = issues.filter(i => i.volume_slug === v.slug)
           return (
-            <div key={v.slug} className="card">
-              {v.image_url && <img src={v.image_url} alt="" className="card__img" />}
+            <div key={v.slug} className="card card--flat">
               <div className="card__body">
                 <div className="card__meta">{v.season} · {v.year}</div>
                 <div className="card__title">{v.title}</div>
                 <div className="card__sub">{v.theme}</div>
                 <div className="card__sub">{vIssues.length} issue{vIssues.length === 1 ? '' : 's'}</div>
+                <div className="card__images">
+                  <span className="card__images-label">Images</span>
+                  <ImageStrip images={[v.image_url]} />
+                </div>
                 <div className="card__actions">
                   <button className="icon-btn" onClick={() => setEditing(v)}>Edit</button>
                   <button className="icon-btn icon-btn--danger" onClick={() => remove(v.slug)}><Trash2 size={14} /></button>

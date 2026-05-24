@@ -3,6 +3,7 @@ import { Routes, Route, Link, useNavigate, useParams } from 'react-router-dom'
 import { Plus, Edit3, Trash2, Eye, EyeOff, ArrowLeft, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { ArticleRow, ColumnRow, Genre } from '../lib/types'
+import ImageStrip, { extractImagesFromContent } from '../components/ImageStrip'
 
 const GENRES: { value: Genre; label: string }[] = [
   { value: 'nonfiction', label: 'Nonfiction' },
@@ -82,33 +83,40 @@ function ArticlesList() {
             <th>Genre</th>
             <th>Date</th>
             <th>Status</th>
+            <th>Images</th>
             <th></th>
           </tr>
         </thead>
         <tbody>
-          {filtered.map(r => (
-            <tr key={r.id}>
-              <td>
-                <div className="table__title">{r.title}</div>
-                <div className="table__slug">/{r.slug}</div>
-              </td>
-              <td>{r.author}</td>
-              <td><span className="tag">{r.genre}</span></td>
-              <td>{r.date_label}</td>
-              <td>
-                <button className="icon-btn" title={r.published ? 'Unpublish' : 'Publish'} onClick={() => togglePublished(r)}>
-                  {r.published ? <Eye size={14} /> : <EyeOff size={14} />}
-                  <span>{r.published ? 'Published' : 'Draft'}</span>
-                </button>
-              </td>
-              <td className="table__actions">
-                <Link to={String(r.id)} className="icon-btn"><Edit3 size={14} /></Link>
-                <button className="icon-btn icon-btn--danger" onClick={() => remove(r)}><Trash2 size={14} /></button>
-              </td>
-            </tr>
-          ))}
+          {filtered.map(r => {
+            const inline = extractImagesFromContent(r.content)
+            // De-dupe — cover may also appear in content
+            const all = Array.from(new Set([r.image_url, ...inline].filter(Boolean)))
+            return (
+              <tr key={r.id}>
+                <td>
+                  <div className="table__title">{r.title}</div>
+                  <div className="table__slug">/{r.slug}</div>
+                </td>
+                <td>{r.author}</td>
+                <td><span className="tag">{r.genre}</span></td>
+                <td>{r.date_label}</td>
+                <td>
+                  <button className="icon-btn" title={r.published ? 'Unpublish' : 'Publish'} onClick={() => togglePublished(r)}>
+                    {r.published ? <Eye size={14} /> : <EyeOff size={14} />}
+                    <span>{r.published ? 'Published' : 'Draft'}</span>
+                  </button>
+                </td>
+                <td className="table__images-cell"><ImageStrip images={all} /></td>
+                <td className="table__actions">
+                  <Link to={String(r.id)} className="icon-btn"><Edit3 size={14} /></Link>
+                  <button className="icon-btn icon-btn--danger" onClick={() => remove(r)}><Trash2 size={14} /></button>
+                </td>
+              </tr>
+            )
+          })}
           {!loading && filtered.length === 0 && (
-            <tr><td colSpan={6} className="table__empty">No articles {q ? 'match your search' : 'yet'}.</td></tr>
+            <tr><td colSpan={7} className="table__empty">No articles {q ? 'match your search' : 'yet'}.</td></tr>
           )}
         </tbody>
       </table>

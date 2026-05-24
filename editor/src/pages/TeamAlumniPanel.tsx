@@ -2,6 +2,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { TeamMemberRow, AlumRow } from '../lib/types'
+import ImageStrip from '../components/ImageStrip'
 
 type Tab = 'team' | 'alumni'
 
@@ -53,12 +54,15 @@ function TeamSection() {
       </div>
       <div className="cards">
         {rows.map(r => (
-          <div key={r.id} className={`card ${!r.active ? 'is-inactive' : ''}`}>
-            {r.portrait_url && <img src={r.portrait_url} alt="" className="card__img card__img--portrait" />}
+          <div key={r.id} className={`card card--flat ${!r.active ? 'is-inactive' : ''}`}>
             <div className="card__body">
               <div className="card__title">{r.name}</div>
               <div className="card__meta">{r.role}</div>
               <div className="card__sub">{r.school} {r.class_year}</div>
+              <div className="card__images">
+                <span className="card__images-label">Images</span>
+                <ImageStrip images={[r.portrait_url]} />
+              </div>
               <div className="card__actions">
                 <button className="icon-btn" onClick={() => setEditing(r)}>Edit</button>
                 <button className="icon-btn icon-btn--danger" onClick={() => remove(r)}><Trash2 size={14} /></button>
@@ -117,13 +121,16 @@ function AlumniSection() {
       </div>
       <div className="cards">
         {rows.map(r => (
-          <div key={r.id} className="card">
-            {r.portrait_url && <img src={r.portrait_url} alt="" className="card__img card__img--portrait" />}
+          <div key={r.id} className="card card--flat">
             <div className="card__body">
               <div className="card__title">{r.name}</div>
               <div className="card__meta">{r.role}</div>
               <div className="card__sub">{r.school} {r.class_year}</div>
               {r.note && <p className="card__note">{r.note}</p>}
+              <div className="card__images">
+                <span className="card__images-label">Images</span>
+                <ImageStrip images={[r.portrait_url]} />
+              </div>
               <div className="card__actions">
                 <button className="icon-btn" onClick={() => setEditing(r)}>Edit</button>
                 <button className="icon-btn icon-btn--danger" onClick={() => remove(r)}><Trash2 size={14} /></button>
