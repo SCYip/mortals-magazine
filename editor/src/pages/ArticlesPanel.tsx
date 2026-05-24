@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent } from 'react'
+import { useEffect, useRef, useState, FormEvent } from 'react'
 import { Routes, Route, Link, useNavigate, useParams } from 'react-router-dom'
 import { Plus, Edit3, Trash2, Eye, EyeOff, ArrowLeft, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
@@ -33,9 +33,13 @@ function ArticlesList() {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [q, setQ] = useState('')
+  // Background refetches (tab refocus, etc.) shouldn't blank the
+  // panel — show the existing rows while the new ones come in.
+  const hasLoadedOnce = useRef(false)
 
   const refetch = async () => {
-    setLoading(true); setLoadError(null)
+    if (!hasLoadedOnce.current) setLoading(true)
+    setLoadError(null)
     try {
       const { data, error } = await supabase.from('articles').select('*').order('published_at', { ascending: false })
       if (error) throw error
@@ -44,6 +48,7 @@ function ArticlesList() {
       setLoadError(e?.message ?? 'Failed to load articles')
     } finally {
       setLoading(false)
+      hasLoadedOnce.current = true
     }
   }
   useEffect(() => { refetch() }, [])

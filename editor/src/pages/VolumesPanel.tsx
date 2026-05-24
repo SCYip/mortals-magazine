@@ -1,4 +1,4 @@
-import { useEffect, useState, FormEvent } from 'react'
+import { useEffect, useRef, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { VolumeRow, IssueRow } from '../lib/types'
@@ -16,8 +16,10 @@ export default function VolumesPanel() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Partial<VolumeRow> | null>(null)
 
+  const hasLoadedOnce = useRef(false)
   const refetch = async () => {
-    setLoading(true); setLoadError(null)
+    if (!hasLoadedOnce.current) setLoading(true)
+    setLoadError(null)
     try {
       const [vs, is_] = await Promise.all([
         supabase.from('volumes').select('*').order('sort_order'),
@@ -31,6 +33,7 @@ export default function VolumesPanel() {
       setLoadError(e?.message ?? 'Failed to load volumes')
     } finally {
       setLoading(false)
+      hasLoadedOnce.current = true
     }
   }
   useEffect(() => { refetch() }, [])

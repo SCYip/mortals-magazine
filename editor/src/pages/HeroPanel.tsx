@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, Trash2, Upload, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { HeroSlideRow } from '../lib/types'
@@ -11,8 +11,10 @@ export default function HeroPanel() {
   const [loadError, setLoadError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  const hasLoadedOnce = useRef(false)
   const refetch = async () => {
-    setLoading(true); setLoadError(null)
+    if (!hasLoadedOnce.current) setLoading(true)
+    setLoadError(null)
     try {
       const { data, error } = await supabase.from('hero_slides').select('*').order('sort_order')
       if (error) throw error
@@ -21,6 +23,7 @@ export default function HeroPanel() {
       setLoadError(e?.message ?? 'Failed to load hero slides')
     } finally {
       setLoading(false)
+      hasLoadedOnce.current = true
     }
   }
   useEffect(() => { refetch() }, [])
