@@ -30,13 +30,20 @@ export default function ArticlesPanel() {
 function ArticlesList() {
   const [rows, setRows] = useState<ArticleRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [q, setQ] = useState('')
 
   const refetch = async () => {
-    setLoading(true)
-    const { data, error } = await supabase.from('articles').select('*').order('published_at', { ascending: false })
-    if (!error && data) setRows(data as ArticleRow[])
-    setLoading(false)
+    setLoading(true); setLoadError(null)
+    try {
+      const { data, error } = await supabase.from('articles').select('*').order('published_at', { ascending: false })
+      if (error) throw error
+      if (data) setRows(data as ArticleRow[])
+    } catch (e: any) {
+      setLoadError(e?.message ?? 'Failed to load articles')
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(() => { refetch() }, [])
 
@@ -73,6 +80,11 @@ function ArticlesList() {
         onChange={e => setQ(e.target.value)}
       />
 
+      {loadError && (
+        <div className="flash flash--err">
+          {loadError} · <button className="link-btn" onClick={refetch}>Retry</button>
+        </div>
+      )}
       {loading && <div className="panel__loading">Loading…</div>}
 
       <table className="table">

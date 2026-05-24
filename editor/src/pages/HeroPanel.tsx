@@ -7,13 +7,20 @@ import { resolveImageUrl } from '../components/ImageStrip'
 export default function HeroPanel() {
   const [rows, setRows] = useState<HeroSlideRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
   const refetch = async () => {
-    setLoading(true)
-    const { data } = await supabase.from('hero_slides').select('*').order('sort_order')
-    setRows((data as HeroSlideRow[]) ?? [])
-    setLoading(false)
+    setLoading(true); setLoadError(null)
+    try {
+      const { data, error } = await supabase.from('hero_slides').select('*').order('sort_order')
+      if (error) throw error
+      setRows((data as HeroSlideRow[]) ?? [])
+    } catch (e: any) {
+      setLoadError(e?.message ?? 'Failed to load hero slides')
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(() => { refetch() }, [])
 
@@ -65,6 +72,11 @@ export default function HeroPanel() {
         </label>
       </div>
 
+      {loadError && (
+        <div className="flash flash--err">
+          {loadError} · <button className="link-btn" onClick={refetch}>Retry</button>
+        </div>
+      )}
       {loading && <div className="panel__loading">Loading…</div>}
 
       <div className="hero-grid">

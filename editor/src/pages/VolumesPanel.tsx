@@ -12,17 +12,25 @@ export default function VolumesPanel() {
   const [volumes, setVolumes] = useState<VolumeRow[]>([])
   const [issues, setIssues] = useState<IssueRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [editing, setEditing] = useState<Partial<VolumeRow> | null>(null)
 
   const refetch = async () => {
-    setLoading(true)
-    const [vs, is_] = await Promise.all([
-      supabase.from('volumes').select('*').order('sort_order'),
-      supabase.from('issues').select('*').order('sort_order'),
-    ])
-    setVolumes((vs.data as VolumeRow[]) ?? [])
-    setIssues((is_.data as IssueRow[]) ?? [])
-    setLoading(false)
+    setLoading(true); setLoadError(null)
+    try {
+      const [vs, is_] = await Promise.all([
+        supabase.from('volumes').select('*').order('sort_order'),
+        supabase.from('issues').select('*').order('sort_order'),
+      ])
+      if (vs.error) throw vs.error
+      if (is_.error) throw is_.error
+      setVolumes((vs.data as VolumeRow[]) ?? [])
+      setIssues((is_.data as IssueRow[]) ?? [])
+    } catch (e: any) {
+      setLoadError(e?.message ?? 'Failed to load volumes')
+    } finally {
+      setLoading(false)
+    }
   }
   useEffect(() => { refetch() }, [])
 
@@ -66,6 +74,11 @@ export default function VolumesPanel() {
         </button>
       </div>
 
+      {loadError && (
+        <div className="flash flash--err">
+          {loadError} · <button className="link-btn" onClick={refetch}>Retry</button>
+        </div>
+      )}
       {loading && <div className="panel__loading">Loading…</div>}
 
       <div className="cards">

@@ -28,9 +28,16 @@ export default function TeamAlumniPanel() {
 function TeamSection() {
   const [rows, setRows] = useState<TeamMemberRow[]>([])
   const [editing, setEditing] = useState<Partial<TeamMemberRow> | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const refetch = async () => {
-    const { data } = await supabase.from('team_members').select('*').order('sort_order')
-    setRows((data as TeamMemberRow[]) ?? [])
+    setLoadError(null)
+    try {
+      const { data, error } = await supabase.from('team_members').select('*').order('sort_order')
+      if (error) throw error
+      setRows((data as TeamMemberRow[]) ?? [])
+    } catch (e: any) {
+      setLoadError(e?.message ?? 'Failed to load team')
+    }
   }
   useEffect(() => { refetch() }, [])
   const save = async (e: FormEvent) => {
@@ -47,6 +54,11 @@ function TeamSection() {
   }
   return (
     <>
+      {loadError && (
+        <div className="flash flash--err">
+          {loadError} · <button className="link-btn" onClick={refetch}>Retry</button>
+        </div>
+      )}
       <div className="subhead">
         <button className="btn btn--primary" onClick={() => setEditing({ active: true })}>
           <Plus size={14} /> Add team member
@@ -95,9 +107,16 @@ function TeamSection() {
 function AlumniSection() {
   const [rows, setRows] = useState<AlumRow[]>([])
   const [editing, setEditing] = useState<Partial<AlumRow> | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const refetch = async () => {
-    const { data } = await supabase.from('alumni').select('*').order('sort_order')
-    setRows((data as AlumRow[]) ?? [])
+    setLoadError(null)
+    try {
+      const { data, error } = await supabase.from('alumni').select('*').order('sort_order')
+      if (error) throw error
+      setRows((data as AlumRow[]) ?? [])
+    } catch (e: any) {
+      setLoadError(e?.message ?? 'Failed to load alumni')
+    }
   }
   useEffect(() => { refetch() }, [])
   const save = async (e: FormEvent) => {
@@ -114,6 +133,11 @@ function AlumniSection() {
   }
   return (
     <>
+      {loadError && (
+        <div className="flash flash--err">
+          {loadError} · <button className="link-btn" onClick={refetch}>Retry</button>
+        </div>
+      )}
       <div className="subhead">
         <button className="btn btn--primary" onClick={() => setEditing({})}>
           <Plus size={14} /> Add alum
