@@ -3,6 +3,30 @@
  * Pass image URLs (any falsy entries are skipped). Renders an "empty"
  * placeholder when there are no images, so callers don't need to guard.
  */
+
+// Where the public site lives. Image URLs in our content are usually
+// relative (e.g. `/images/foo.png`) because they're served by the main
+// mortalsmag deploy. The editor lives on a different origin, so a
+// relative `<img src>` would resolve to the editor's domain and
+// Netlify's SPA fallback would hand back index.html instead of the
+// image. We rewrite those paths to point at the public site.
+const PUBLIC_SITE =
+  (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, '') ||
+  'https://mortalsmag.netlify.app'
+
+/** Turn a possibly-relative image path into a fully-qualified URL. */
+export function resolveImageUrl(url: string): string {
+  if (!url) return url
+  // Already absolute (Supabase storage public URLs, external CDNs, data:, blob:)
+  if (/^(https?:|data:|blob:)/i.test(url)) return url
+  // Protocol-relative
+  if (url.startsWith('//')) return `https:${url}`
+  // Site-rooted path → prefix with public site origin
+  if (url.startsWith('/')) return `${PUBLIC_SITE}${url}`
+  // Bare path (rare) — treat as site-rooted
+  return `${PUBLIC_SITE}/${url}`
+}
+
 type Props = {
   images: (string | null | undefined)[]
   /** Override per-row aria label (e.g. "Cover + 2 inline"). Omit for default. */
@@ -11,7 +35,9 @@ type Props = {
 }
 
 export default function ImageStrip({ images, label, size = 40 }: Props) {
-  const clean = images.filter((u): u is string => !!u && u.trim().length > 0)
+  const clean = images
+    .filter((u): u is string => !!u && u.trim().length > 0)
+    .map(resolveImageUrl)
   if (clean.length === 0) {
     return (
       <div className="strip strip--empty" aria-label="No images">
