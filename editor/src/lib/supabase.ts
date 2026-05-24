@@ -12,30 +12,50 @@ const T0 = Date.now()
 const t = () => `${((Date.now() - T0) / 1000).toFixed(1)}s`
 const dbg = (...args: unknown[]) => console.log('[mortals]', t(), ...args)
 
-// In-memory mutex used in place of supabase-js's default navigator.locks.
-// Two goals:
-//   1. Never touch navigator.locks. We've been bitten by leaked locks from
-//      a previous tab that died without releasing — every getSession() then
-//      hangs forever.
-//   2. Still serialize concurrent refreshes. supabase-js fires an
-//      autoRefreshTick every 10 seconds, and if that races with one of our
-//      data fetches both can read/write the persisted token at the same
-//      time and corrupt it (symptom: content stops loading ~10 s after
-//      page load). A simple promise chain forces sequential execution.
+// Wrap navigator.locks with a "steal after timeout" escape hatch.
 //
-// Each acquire/release is also logged so a stuck-forever chain is
-// observable in production.
-let lockChain: Promise<unknown> = Promise.resolve()
+// Background: supabase-js's default lock uses navigator.locks. That's
+// the right answer for cross-tab refresh coordination, except a lock
+// that was held by a previous tab which crashed (or was closed mid-
+// refresh) stays held forever and blocks every subsequent getSession()
+// in this tab.
+//
+// Earlier we tried a no-op and then a promise-chain mutex, but both
+// create *worse* races: any piggybacked operation (SIGNED_OUT
+// listeners, useRole's getSession, ArticlesPanel's access-token
+// lookup) keeps the outer lock callback alive and the chain stalls.
+//
+// This version requests the lock with a short timeout. If we can't
+// get it, we use `steal: true` to break the dead lock — that's
+// exactly what the Lock API gives us for this scenario.
 let lockSeq = 0
-const memoryLock = <R,>(name: string, _timeoutMs: number, fn: () => Promise<R>): Promise<R> => {
+const navigatorLock = async <R,>(name: string, _timeoutMs: number, fn: () => Promise<R>): Promise<R> => {
   const id = ++lockSeq
   dbg('lock.acquire', id, name)
-  const next = lockChain.then(() => fn()).then(
-    v => { dbg('lock.release.ok', id); return v },
-    e => { dbg('lock.release.err', id, String(e?.message ?? e).slice(0, 200)); throw e },
-  )
-  lockChain = next.catch(() => undefined)
-  return next as Promise<R>
+  const releaseOk = (v: R): R => { dbg('lock.release.ok', id); return v }
+  const releaseErr = (label: string, e: unknown): never => {
+    dbg('lock.release.err.' + label, id, String((e as Error)?.message ?? e).slice(0, 200))
+    throw e
+  }
+  // First attempt: normal wait (5s) — long enough for legitimate
+  // overlaps, short enough that a leaked lock doesn't stall the UI.
+  try {
+    return await Promise.race([
+      navigator.locks.request(name, { mode: 'exclusive' }, async () => {
+        try { return releaseOk(await fn()) }
+        catch (e) { return releaseErr('normal', e) }
+      }) as Promise<R>,
+      new Promise<R>((_, reject) => setTimeout(() => reject(new Error('lock-timeout')), 5000)),
+    ])
+  } catch (e: any) {
+    if (e?.message !== 'lock-timeout') throw e
+    dbg('lock.steal', id, name)
+    // Second attempt: steal — breaks any dead lock left by a crashed tab.
+    return await (navigator.locks.request(name, { mode: 'exclusive', steal: true }, async () => {
+      try { return releaseOk(await fn()) }
+      catch (e2) { return releaseErr('after-steal', e2) }
+    }) as Promise<R>)
+  }
 }
 
 // Wrap fetch to time every Supabase REST/Auth call. This is the single
@@ -62,7 +82,7 @@ export const supabase = createClient(url, anonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    lock: memoryLock,
+    lock: navigatorLock,
   },
 })
 
