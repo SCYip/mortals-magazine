@@ -62,6 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
   const signOut = async () => {
     await supabase.auth.signOut()
+    // Full reload to /login. Otherwise the React tree keeps the
+    // panel-level component state (rows, loading flags, etc.) around
+    // until garbage-collected, and the next sign-in can render that
+    // stale state for a beat before refetching.
+    window.location.href = '/login'
   }
 
   const value: AuthState = { session, loading, signIn, signOut }
