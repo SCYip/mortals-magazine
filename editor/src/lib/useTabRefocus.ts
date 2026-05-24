@@ -1,24 +1,15 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * Reload-on-refocus for list views; soft refetch for edit forms.
+ * Re-fires `refetch` when the page regains focus after being away for
+ * more than `minHiddenMs` (default 2000). Listens to BOTH
+ * `visibilitychange` (tab switch / browser minimize) and
+ * `window.focus`/`blur` (cross-app: alt-tab to WeChat etc.).
  *
- * Why both visibilitychange AND focus/blur:
- *
- *   - `visibilitychange` fires when the BROWSER TAB toggles hidden /
- *     visible (e.g. user switches Chrome tabs, or minimizes the Chrome
- *     window). It does NOT fire when the user alt-tabs to a different
- *     app like WeChat — the editor tab is still "visible" as far as
- *     Chrome is concerned, only the Chrome window has lost focus.
- *
- *   - `window.blur` / `window.focus` cover the cross-app case. When
- *     you switch to WeChat the editor window loses focus (blur); when
- *     you come back to Chrome it regains focus.
- *
- * We track ANY blur-like event ("hide") and ANY focus-like event
- * ("show"), record the timestamp the page went away, and on return
- * reload the page if it was away for `minHiddenMs` or more. Edit-form
- * routes skip the reload so unsaved input isn't lost.
+ * Token freshness on refocus is handled in `supabase.ts` via the
+ * `window.focus` listener that calls refreshSession() when the stored
+ * access_token is close to expiry. By the time `refetch()` runs here
+ * the token is current, so the REST call goes out cleanly.
  */
 export function useTabRefocus(refetch: () => void, minHiddenMs = 2000) {
   const cb = useRef(refetch)
@@ -26,51 +17,31 @@ export function useTabRefocus(refetch: () => void, minHiddenMs = 2000) {
 
   useEffect(() => {
     let hiddenAt: number | null = null
-    let reloading = false
 
     const onHide = () => {
-      // Only record the first hide event in a sequence.
       if (hiddenAt === null) hiddenAt = Date.now()
     }
     const onShow = () => {
-      if (reloading) return
       if (hiddenAt === null) return
       const elapsed = Date.now() - hiddenAt
       hiddenAt = null
       if (elapsed < minHiddenMs) return
-      const path = window.location.pathname
-      const isEditRoute = /\/(new|\d+)(\/|$)/.test(path)
-      if (isEditRoute) {
-        cb.current()
-      } else {
-        reloading = true
-        // setTimeout(0) so the user sees one frame of the focused
-        // editor before it reloads — feels less jarring than the page
-        // tearing apart at the same moment they clicked back into it.
-        setTimeout(() => window.location.reload(), 0)
-      }
+      cb.current()
     }
-
     const onVisibilityChange = () => {
       if (document.visibilityState === 'hidden') onHide()
       else if (document.visibilityState === 'visible') onShow()
     }
-    const onBlur = () => onHide()
-    const onFocus = () => onShow()
-    // pageshow fires on bfcache restore (Safari "back" button etc.);
-    // treat that as a fresh visible event so we still reload if the
-    // page was tucked away for a while.
-    const onPageShow = () => onShow()
 
     document.addEventListener('visibilitychange', onVisibilityChange)
-    window.addEventListener('blur', onBlur)
-    window.addEventListener('focus', onFocus)
-    window.addEventListener('pageshow', onPageShow)
+    window.addEventListener('blur', onHide)
+    window.addEventListener('focus', onShow)
+    window.addEventListener('pageshow', onShow)
     return () => {
       document.removeEventListener('visibilitychange', onVisibilityChange)
-      window.removeEventListener('blur', onBlur)
-      window.removeEventListener('focus', onFocus)
-      window.removeEventListener('pageshow', onPageShow)
+      window.removeEventListener('blur', onHide)
+      window.removeEventListener('focus', onShow)
+      window.removeEventListener('pageshow', onShow)
     }
   }, [minHiddenMs])
 }
