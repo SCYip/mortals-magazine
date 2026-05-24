@@ -2,7 +2,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { TeamMemberRow, AlumRow } from '../lib/types'
-import ImageStrip from '../components/ImageStrip'
+import ImageStrip, { resolveImageUrl } from '../components/ImageStrip'
 
 type Tab = 'team' | 'alumni'
 
@@ -180,7 +180,7 @@ function PersonEditor({ row, onClose, onSave, onChange, fields, withActive }: Pe
         <div className="form__field">
           <span>Portrait</span>
           <div className="upload">
-            {row.portrait_url && <img src={row.portrait_url} alt="" className="upload__preview upload__preview--portrait" />}
+            {row.portrait_url && <img src={resolveImageUrl(row.portrait_url)} alt="" className="upload__preview upload__preview--portrait" />}
             <label className="upload__btn"><Upload size={14} /> Upload
               <input type="file" accept="image/*" hidden onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
             </label>

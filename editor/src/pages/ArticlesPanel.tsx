@@ -3,7 +3,7 @@ import { Routes, Route, Link, useNavigate, useParams } from 'react-router-dom'
 import { Plus, Edit3, Trash2, Eye, EyeOff, ArrowLeft, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { ArticleRow, ColumnRow, Genre } from '../lib/types'
-import ImageStrip, { extractImagesFromContent } from '../components/ImageStrip'
+import ImageStrip, { extractImagesFromContent, resolveImageUrl } from '../components/ImageStrip'
 
 const GENRES: { value: Genre; label: string }[] = [
   { value: 'nonfiction', label: 'Nonfiction' },
@@ -258,7 +258,7 @@ function ArticleEditor() {
           <div className="form__field">
             <span>Cover image</span>
             <div className="upload">
-              {row.image_url && <img src={row.image_url} alt="" className="upload__preview" />}
+              {row.image_url && <img src={resolveImageUrl(row.image_url)} alt="" className="upload__preview" />}
               <label className="upload__btn">
                 <Upload size={14} /> {row.image_url ? 'Replace' : 'Upload'}
                 <input type="file" accept="image/*" hidden onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />

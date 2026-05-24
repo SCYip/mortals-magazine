@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Plus, Trash2, Upload, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { HeroSlideRow } from '../lib/types'
+import { resolveImageUrl } from '../components/ImageStrip'
 
 export default function HeroPanel() {
   const [rows, setRows] = useState<HeroSlideRow[]>([])
@@ -69,7 +70,7 @@ export default function HeroPanel() {
       <div className="hero-grid">
         {rows.map((r, i) => (
           <div key={r.id} className={`hero-card ${!r.active ? 'is-inactive' : ''}`}>
-            <div className="hero-card__thumb" style={{ backgroundImage: `url(${r.image_url})` }}>
+            <div className="hero-card__thumb" style={{ backgroundImage: `url(${resolveImageUrl(r.image_url)})` }}>
               <div className="hero-card__order">{i + 1}</div>
             </div>
             <input

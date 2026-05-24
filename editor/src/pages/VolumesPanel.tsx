@@ -2,7 +2,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
 import type { VolumeRow, IssueRow } from '../lib/types'
-import ImageStrip from '../components/ImageStrip'
+import ImageStrip, { resolveImageUrl } from '../components/ImageStrip'
 
 function slugify(s: string) {
   return s.toLowerCase().replace(/['"]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80)
@@ -127,7 +127,7 @@ export default function VolumesPanel() {
             <div className="form__field">
               <span>Cover image</span>
               <div className="upload">
-                {editing.image_url && <img src={editing.image_url} alt="" className="upload__preview" />}
+                {editing.image_url && <img src={resolveImageUrl(editing.image_url)} alt="" className="upload__preview" />}
                 <label className="upload__btn">
                   Upload <input type="file" accept="image/*" hidden onChange={e => e.target.files?.[0] && onUpload(e.target.files[0])} />
                 </label>
