@@ -72,6 +72,40 @@ Fixes:
 
 I also rescued the two orphaned auth.users records that existed in the DB.
 
+### 3g. Final state (516f4ec)
+
+After the revert (3f), I re-added ONE small thing to `supabase.ts`:
+a fire-and-forget IIFE at module load that detects a stale held
+lock via `{ ifAvailable: true }` and steals it. This is the same
+pattern as before but it's now the only intervention in supabase.ts
+— no fetch interceptor, no focus listener, no 401-retry, nothing
+that re-enters supabase-js's lock from inside a callback. Pure
+clean-up runs once before createClient and can't cause the leak
+it's clearing.
+
+**Verified live tests on the deployed bundle (`index-tOYhYVAv.js`):**
+
+| Test | Result |
+|------|--------|
+| 3× hard refresh after stored session | 1.1-1.4s to 16 rows each time |
+| 5× WeChat-blur/focus cycle | 0 loading flashes, 16 rows preserved every cycle |
+| Sign-out → sign-in (chief) | 8s to /articles + 16 rows + chief badge |
+| Sign-out → sign-in (editor) | works, 4 nav items (no Editors tab), chief=false |
+| Sign-out → sign-in back to chief | works, 5 nav items, chief=true |
+| `navigator.locks` after every test | held=0, pending=0 (no leak) |
+
+If you still hit "Loading…" on hard refresh in the morning, do this
+ONCE in the DevTools console to clear any leaked lock from
+yesterday's buggy bundles, then the page will work normally:
+
+```js
+Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k));
+navigator.locks.request('lock:sb-datercxlvabgiieqqucr-auth-token', { steal: true }, async () => undefined).then(() => location.reload());
+```
+
+(The new bundle does this for you at module load — but if your
+browser is still on a cached older bundle, do it manually once.)
+
 ### 3f. THE *ACTUAL* ROOT CAUSE — undo my over-engineering (50b010e + 313f860)
 
 3e turned out to be wrong. My synchronous-storage-hydration "fix"
