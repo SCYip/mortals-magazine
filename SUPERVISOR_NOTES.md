@@ -72,6 +72,20 @@ Fixes:
 
 I also rescued the two orphaned auth.users records that existed in the DB.
 
+### 3b. `editor: tab-refocus does a full reload on list views` (8fedd53)
+You reported one more time that switching to WeChat and back broke
+the panels. The old `useTabRefocus` soft-refetched, which raced with
+supabase-js's own visibilitychange handler — both hit the auth lock
+at the same instant and the panel's refetch went out with an
+in-flight token. Now `useTabRefocus` does `window.location.reload()`
+on tab refocus from list views. The session is in localStorage so
+you stay signed in, the fresh page reads it cleanly, every panel
+fetches with the correct token from the first request. Edit-form
+routes (`/articles/new`, `/articles/123`, etc.) skip the reload and
+fall back to soft refetch so unsaved typing isn't lost. Verified in
+browser: simulated tab-hidden 3 s then tab-visible → page reloaded,
+16 articles loaded, signed-in state preserved.
+
 ### 4. `editor: route-level ErrorBoundary so panel crashes are recoverable` (a1cd4d8)
 Each `Protected` route now wraps its child in `<ErrorBoundary label="...">`. Until tonight a null deref inside a panel would unmount the whole React tree and blank the screen. Now you get an error card with the message + Try Again / Reload buttons, and sibling panels keep working.
 
