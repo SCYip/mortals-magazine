@@ -120,6 +120,11 @@ type IssueRow = {
 }
 
 // ---------- Fetchers ----------
+// Each fetcher falls back to the bundled static data when:
+//   (a) Supabase isn't configured (no env vars), or
+//   (b) the request errors, or
+//   (c) the table is empty (so the site shows existing content from day one,
+//       even before editors add anything via the panel).
 export async function getArticles(): Promise<Article[]> {
   if (!hasSupabase || !supabase) return staticArticles
   const { data, error } = await supabase
@@ -131,6 +136,7 @@ export async function getArticles(): Promise<Article[]> {
     console.warn('[api] getArticles fallback:', error?.message)
     return staticArticles
   }
+  if (data.length === 0) return staticArticles
   return (data as ArticleRow[]).map(mapArticle)
 }
 
@@ -159,6 +165,7 @@ export async function getColumns(): Promise<Column[]> {
     console.warn('[api] getColumns fallback:', error?.message)
     return staticColumns
   }
+  if (data.length === 0) return staticColumns
   return (data as ColumnRow[]).map(mapColumn)
 }
 
@@ -172,6 +179,7 @@ export async function getVolumes(): Promise<Volume[]> {
     console.warn('[api] getVolumes fallback:', volsRes.error?.message ?? issuesRes.error?.message)
     return staticVolumes
   }
+  if (!volsRes.data || volsRes.data.length === 0) return staticVolumes
   const issuesByVol = new Map<string, Issue[]>()
   for (const r of (issuesRes.data ?? []) as IssueRow[]) {
     const i: Issue = {
