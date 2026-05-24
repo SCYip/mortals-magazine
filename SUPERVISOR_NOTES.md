@@ -72,6 +72,33 @@ Fixes:
 
 I also rescued the two orphaned auth.users records that existed in the DB.
 
+### 3d. ROOT-CAUSE FIX — silent background refetch (fe530f3)
+
+After 3c shipped, you came back with "still the fucking same problem."
+Looking at the [mortals] logs you pasted, *every fetch returned 200*
+in <500 ms. Tokens were fine. RLS was fine. So what was "broken"?
+
+The actual UX bug: every refetch (tab-refocus, useRole's
+onAuthStateChange re-fire, supabase-js's SIGNED_IN re-emit on
+visibility change) was calling `setLoading(true)` at the top, which
+made the panel render `<div>Loading…</div>` for the 500-1000 ms
+the request was in flight. On cross-border China latency that's
+visible. Multiple refetches stacking from cascading auth events
+turned it into multi-second flashes that looked exactly like
+"page stopped loading."
+
+Fix (`hasLoadedOnce` ref in `useRole`, `ArticlesList`, `VolumesPanel`,
+`HeroPanel`): only show the "Loading…" skeleton on the FIRST fetch.
+After that, refetches happen silently — stale rows stay on screen
+until the new rows replace them. Same pattern as react-query's
+`isFetching` vs `isLoading` distinction. EditorsPanel reads
+`useRole.loading` so it's fixed transitively.
+
+**Validation:** MutationObserver watching for `.panel__loading`
+additions across 17 refocus cycles (5 on Articles + 4 each on
+Volumes/Hero/Editors): **0 loading flashes observed, all data
+preserved**.
+
 ### 3c. ROOT-CAUSE FIX — proactive token refresh on window focus (bf98746)
 
 You called me out on adding a refresh feature instead of fixing the
