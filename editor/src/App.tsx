@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { LogOut, FileText, BookOpen, Image as ImageIcon, Users, Crown } from 'lucide-react'
-import { useAuth } from './lib/auth'
+import { useAuth, AuthProvider } from './lib/auth'
 import { useRole } from './lib/role'
 import LoginPage from './pages/LoginPage'
 import ArticlesPanel from './pages/ArticlesPanel'
@@ -68,15 +68,17 @@ function Protected({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<Navigate to="/articles" replace />} />
-      <Route path="/articles/*" element={<Protected><ArticlesPanel /></Protected>} />
-      <Route path="/volumes/*" element={<Protected><VolumesPanel /></Protected>} />
-      <Route path="/hero" element={<Protected><HeroPanel /></Protected>} />
-      <Route path="/people" element={<Protected><TeamAlumniPanel /></Protected>} />
-      <Route path="/editors" element={<Protected><EditorsPanel /></Protected>} />
-      <Route path="*" element={<Navigate to="/articles" replace />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/" element={<Navigate to="/articles" replace />} />
+        <Route path="/articles/*" element={<Protected><ArticlesPanel /></Protected>} />
+        <Route path="/volumes/*" element={<Protected><VolumesPanel /></Protected>} />
+        <Route path="/hero" element={<Protected><HeroPanel /></Protected>} />
+        <Route path="/people" element={<Protected><TeamAlumniPanel /></Protected>} />
+        <Route path="/editors" element={<Protected><EditorsPanel /></Protected>} />
+        <Route path="*" element={<Navigate to="/articles" replace />} />
+      </Routes>
+    </AuthProvider>
   )
 }
