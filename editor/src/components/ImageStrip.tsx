@@ -57,7 +57,10 @@ export default function ImageStrip({ images, label, size = 40 }: Props) {
           title={url}
           style={{ width: size, height: size }}
         >
-          <img src={url} alt="" loading="lazy" />
+          {/* Eager load — these are 40px thumbnails, lazy intersection
+              observer never fires on items this small and the strip ends
+              up showing nothing. */}
+          <img src={url} alt="" />
         </a>
       ))}
       <span className="strip__count">{clean.length}</span>
