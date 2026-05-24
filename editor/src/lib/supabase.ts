@@ -12,55 +12,40 @@ const T0 = Date.now()
 const t = () => `${((Date.now() - T0) / 1000).toFixed(1)}s`
 const dbg = (...args: unknown[]) => console.log('[mortals]', t(), ...args)
 
-// Wrap navigator.locks with a "steal after timeout" escape hatch.
+// Clear a leaked navigator-lock from a previous tab.
 //
-// Background: supabase-js's default lock uses navigator.locks. That's
-// the right answer for cross-tab refresh coordination, except a lock
-// that was held by a previous tab which crashed (or was closed mid-
-// refresh) stays held forever and blocks every subsequent getSession()
-// in this tab.
+// supabase-js uses navigator.locks (key: `lock:sb-<ref>-auth-token`)
+// to serialize cross-tab refreshes. If the previous tab crashed or
+// closed mid-refresh, the lock can be left held — every future
+// getSession() in this tab then waits forever. The Lock API gives us
+// `steal: true` for exactly this case.
 //
-// Earlier we tried a no-op and then a promise-chain mutex, but both
-// create *worse* races: any piggybacked operation (SIGNED_OUT
-// listeners, useRole's getSession, ArticlesPanel's access-token
-// lookup) keeps the outer lock callback alive and the chain stalls.
-//
-// This version requests the lock with a short timeout. If we can't
-// get it, we use `steal: true` to break the dead lock — that's
-// exactly what the Lock API gives us for this scenario.
-let lockSeq = 0
-const navigatorLock = async <R,>(name: string, _timeoutMs: number, fn: () => Promise<R>): Promise<R> => {
-  const id = ++lockSeq
-  dbg('lock.acquire', id, name)
-  const releaseOk = (v: R): R => { dbg('lock.release.ok', id); return v }
-  const releaseErr = (label: string, e: unknown): never => {
-    dbg('lock.release.err.' + label, id, String((e as Error)?.message ?? e).slice(0, 200))
-    throw e
-  }
-  // First attempt: normal wait (5s) — long enough for legitimate
-  // overlaps, short enough that a leaked lock doesn't stall the UI.
-  try {
-    return await Promise.race([
-      navigator.locks.request(name, { mode: 'exclusive' }, async () => {
-        try { return releaseOk(await fn()) }
-        catch (e) { return releaseErr('normal', e) }
-      }) as Promise<R>,
-      new Promise<R>((_, reject) => setTimeout(() => reject(new Error('lock-timeout')), 5000)),
-    ])
-  } catch (e: any) {
-    if (e?.message !== 'lock-timeout') throw e
-    dbg('lock.steal', id, name)
-    // Second attempt: steal — breaks any dead lock left by a crashed tab.
-    return await (navigator.locks.request(name, { mode: 'exclusive', steal: true }, async () => {
-      try { return releaseOk(await fn()) }
-      catch (e2) { return releaseErr('after-steal', e2) }
-    }) as Promise<R>)
-  }
+// At module load, NOTHING legitimate could be holding our lock (we
+// haven't initialized the auth client yet), so if it's not available,
+// it's leaked and safe to steal.
+const projectRef = url?.match(/https:\/\/([a-z0-9]+)\./)?.[1]
+const lockName = projectRef ? `lock:sb-${projectRef}-auth-token` : null
+if (lockName && typeof navigator !== 'undefined' && navigator.locks) {
+  ;(async () => {
+    try {
+      const available = await navigator.locks.request<boolean>(
+        lockName,
+        { ifAvailable: true },
+        (lock) => lock !== null,
+      )
+      if (available === false) {
+        console.warn('[mortals] stale auth lock detected — stealing')
+        await navigator.locks.request(lockName, { steal: true }, async () => undefined)
+      }
+    } catch (err: any) {
+      console.warn('[mortals] lock-cleanup failed:', err?.message ?? err)
+    }
+  })()
 }
 
-// Wrap fetch to time every Supabase REST/Auth call. This is the single
-// best diagnostic when "content stops loading" — we see which request
-// hangs or returns a non-2xx response.
+// Wrap fetch to time every Supabase REST/Auth call. This is the
+// single best diagnostic when "content stops loading" — we see which
+// request hangs or returns a non-2xx response.
 const origFetch = window.fetch.bind(window)
 window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
   const reqUrl = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url
@@ -77,12 +62,15 @@ window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
 window.addEventListener('error', e => dbg('window.error', String(e.message).slice(0, 200)))
 window.addEventListener('unhandledrejection', e => dbg('window.rejection', String(e.reason?.message ?? e.reason).slice(0, 200)))
 
+// Use supabase-js's default lock (navigator.locks via AbortController).
+// We don't need a custom lock anymore — the only failure mode we
+// actually need to handle (a leaked lock from a previous tab) is
+// dealt with by the steal-at-startup block above.
 export const supabase = createClient(url, anonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    lock: navigatorLock,
   },
 })
 
