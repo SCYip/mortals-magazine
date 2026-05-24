@@ -43,13 +43,18 @@ if (lockName && typeof navigator !== 'undefined' && navigator.locks) {
   })()
 }
 
-// Wrap every Supabase request in a 15-second abort timeout AND log
-// timing/status. This is the single biggest fix for the recurring
-// "content stops loading" symptom — when cross-border traffic from
-// China to Supabase stalls, the browser's default fetch has no
-// timeout and the UI sits in `loading=true` forever. Aborting at 15s
-// guarantees the call rejects, panels flip `loading=false`, and the
-// user can retry.
+// Wrap every Supabase REST request in a 15-second abort timeout AND
+// log timing/status. The biggest fix for the recurring "content stops
+// loading" symptom — when cross-border traffic from China to Supabase
+// stalls, the browser's default fetch has no timeout and the UI sits
+// in `loading=true` forever.
+//
+// Auth endpoints (/auth/v1/...) are deliberately exempt from the
+// timeout. Aborting an in-flight token refresh leaves supabase-js in
+// a broken state where the session is still valid but the in-memory
+// access_token is stale, which then breaks downstream REST calls
+// (RLS sees them as anon). Auth calls are short-lived enough that
+// the browser's own connection-level timeouts are fine.
 const FETCH_TIMEOUT_MS = 15_000
 const origFetch = window.fetch.bind(window)
 window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
@@ -58,20 +63,21 @@ window.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
   const path = reqUrl.replace(/^https?:\/\/[^/]+/, '').slice(0, 80)
   const start = Date.now()
   dbg('fetch.start', path)
+  const isAuth = path.startsWith('/auth/')
   // Combine any caller-supplied signal with our timeout signal so we
   // don't clobber existing aborts (supabase-js sometimes passes its
   // own AbortSignal).
   const controller = new AbortController()
-  const timer = setTimeout(() => controller.abort(new Error('fetch-timeout')), FETCH_TIMEOUT_MS)
+  const timer = isAuth ? null : setTimeout(() => controller.abort(new Error('fetch-timeout')), FETCH_TIMEOUT_MS)
   const callerSignal = init?.signal
   if (callerSignal) {
     if (callerSignal.aborted) controller.abort(callerSignal.reason)
     else callerSignal.addEventListener('abort', () => controller.abort(callerSignal.reason), { once: true })
   }
   return origFetch(input, { ...init, signal: controller.signal }).then(
-    r => { clearTimeout(timer); dbg('fetch.done', path, r.status, `${Date.now() - start}ms`); return r },
+    r => { if (timer) clearTimeout(timer); dbg('fetch.done', path, r.status, `${Date.now() - start}ms`); return r },
     e => {
-      clearTimeout(timer)
+      if (timer) clearTimeout(timer)
       const ms = Date.now() - start
       const msg = String(e?.message ?? e).slice(0, 200)
       dbg('fetch.fail', path, `${ms}ms`, msg)
