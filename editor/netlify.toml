@@ -3,7 +3,11 @@
   publish = "dist"
 
 [build.environment]
-  NODE_VERSION = "20"
+  # Node 22+ — supabase-js needs native WebSocket support for
+  # admin.createUser() inside Netlify Functions; Node 20 throws
+  # "Node.js 20 detected without native WebSocket support" at
+  # client construction.
+  NODE_VERSION = "22"
 
 [[redirects]]
   from = "/*"
