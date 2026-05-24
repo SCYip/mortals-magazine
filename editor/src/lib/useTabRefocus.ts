@@ -1,18 +1,24 @@
 import { useEffect, useRef } from 'react'
 
 /**
- * Re-fires `refetch` whenever the tab becomes visible again after
- * having been hidden for more than `minHiddenMs` (default 2000).
+ * Reload-on-refocus for list views; soft refetch for edit forms.
  *
- * Chrome aggressively suspends background tabs — in-flight requests
- * can be killed, websockets can drop, and the auth session can drift.
- * The cheapest robust recovery is to just refetch the current view's
- * data the moment the tab refocuses. The minimum-hidden-ms guard
- * prevents spurious refetches when the user quickly alt-tabs.
+ * The previous implementation called `refetch` directly when the tab
+ * became visible again, but that races with supabase-js's own
+ * `_onVisibilityChanged` handler — when both fire at once, refetch can
+ * go out with an in-flight refresh token and either return zero rows
+ * or stall waiting on the auth lock. The user sees the panel "stop
+ * loading" after coming back from another window.
+ *
+ * For list views the bulletproof answer is a full `window.location
+ * .reload()`: the session is persisted in localStorage so the user
+ * stays signed in, and the reloaded page fetches every panel cleanly.
+ *
+ * Edit forms (URLs like `/articles/new` or `/articles/123`,
+ * `/volumes/new`, etc.) preserve unsaved typing by falling back to
+ * the soft refetch instead — same behaviour as before.
  */
 export function useTabRefocus(refetch: () => void, minHiddenMs = 2000) {
-  // Always call the latest refetch closure without making the effect
-  // re-run on every render.
   const cb = useRef(refetch)
   useEffect(() => { cb.current = refetch })
 
@@ -26,7 +32,17 @@ export function useTabRefocus(refetch: () => void, minHiddenMs = 2000) {
       if (document.visibilityState === 'visible' && hiddenAt !== null) {
         const elapsed = Date.now() - hiddenAt
         hiddenAt = null
-        if (elapsed >= minHiddenMs) cb.current()
+        if (elapsed < minHiddenMs) return
+        // Edit-form routes look like /<panel>/new or /<panel>/<id>.
+        // Anything matching that pattern stays on the soft-refetch
+        // path so we don't blow away unsaved input.
+        const path = window.location.pathname
+        const isEditRoute = /\/(new|\d+)(\/|$)/.test(path)
+        if (isEditRoute) {
+          cb.current()
+        } else {
+          window.location.reload()
+        }
       }
     }
     document.addEventListener('visibilitychange', onChange)
