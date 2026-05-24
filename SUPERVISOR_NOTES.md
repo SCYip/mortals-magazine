@@ -72,7 +72,59 @@ Fixes:
 
 I also rescued the two orphaned auth.users records that existed in the DB.
 
-### 3e. THE REAL ROOT CAUSE — synchronous storage hydration (5fff92b)
+### 3f. THE *ACTUAL* ROOT CAUSE — undo my over-engineering (50b010e + 313f860)
+
+3e turned out to be wrong. My synchronous-storage-hydration "fix"
+made things worse. The diagnostic that pointed me at the truth:
+queried `navigator.locks` and saw
+
+```js
+{ held: [{ name: "lock:sb-<ref>-auth-token", mode: "exclusive" }],
+  pending: 0 }
+```
+
+The Supabase auth lock was held in exclusive mode forever, with
+nobody waiting. Every panel's REST fetch returned 200 (per the
+[mortals] fetch.done logs) but the panels still rendered `rows: 0,
+loading: true` because the body parsing and follow-up auth checks
+were stuck inside that leaked lock.
+
+The leak came from MY code stacking on top of supabase-js's lock
+management:
+
+- My fetch wrapper with 401-retry + AbortController timeout was
+  re-entering supabase-js's lock from inside an awaiting callback.
+- My `window.focus` listener was calling `getSession()` /
+  `refreshSession()` while supabase-js was mid-init.
+- My synchronous-storage-hydration in `AuthProvider` was setting
+  React state that triggered downstream supabase calls before
+  supabase-js itself had finished hydrating.
+
+Each of those changes individually looked sound; together they
+created a re-entrant lock-acquire pattern that supabase-js's
+`pendingInLock` mechanism couldn't drain because new callbacks
+kept getting pushed in.
+
+**Fix: rip it all out. Vanilla `createClient`. No fetch interceptor,
+no focus listener, no 401-retry, no synchronous storage hydration.**
+
+`supabase.ts` is now ~50 lines and does nothing supabase-js doesn't
+already do. `AuthProvider` is back to the async-only shape that
+worked on day one.
+
+**Validation:**
+- Cleared `localStorage`, stole any held lock, signed in fresh
+- Page loaded /articles immediately, 16 rows, chief badge, 5 nav
+  items, NO lock held after init (`held: []`)
+- 3-cycle WeChat-simulation stress test: 0 loading flashes, 16
+  rows preserved each cycle, lock still released after each cycle
+
+### 3e. THE REAL ROOT CAUSE — synchronous storage hydration (5fff92b) — REVERTED
+
+(See 3f above. This "fix" was actually the cause of the lock leak,
+since reverted.)
+
+### 3e′. (placeholder)
 
 Earlier "root cause" fixes (3c, 3d) helped but missed the actual bug.
 Caught it by screenshotting the live editor in my browser:
