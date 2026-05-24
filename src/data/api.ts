@@ -206,12 +206,14 @@ export async function getVolumes(): Promise<Volume[]> {
   }))
 }
 
+// Sourced from the live mortalsmag.com slideshow widget (comp-m9e5w0cn)
+// in slide-rotation order — re-scraped via Chrome on 2026-05-24.
 const STATIC_HERO_SLIDES: HeroSlide[] = [
-  { id: 1, imageUrl: '/images/hero_rotation_1.jpg', altText: '', sortOrder: 0 },
-  { id: 2, imageUrl: '/images/hero_rotation_2.jpg', altText: '', sortOrder: 1 },
-  { id: 3, imageUrl: '/images/hero_slide_2.jpg',    altText: '', sortOrder: 2 },
-  { id: 4, imageUrl: '/images/hero_slide_3.jpg',    altText: '', sortOrder: 3 },
-  { id: 5, imageUrl: '/images/hero_slide_5.jpg',    altText: '', sortOrder: 4 },
+  { id: 1, imageUrl: '/images/hero_slide_1.jpg', altText: '', sortOrder: 0 },
+  { id: 2, imageUrl: '/images/hero_slide_2.jpg', altText: '', sortOrder: 1 },
+  { id: 3, imageUrl: '/images/hero_slide_3.jpg', altText: '', sortOrder: 2 },
+  { id: 4, imageUrl: '/images/hero_slide_4.jpg', altText: '', sortOrder: 3 },
+  { id: 5, imageUrl: '/images/hero_slide_5.jpg', altText: '', sortOrder: 4 },
 ]
 
 export async function getHeroSlides(): Promise<HeroSlide[]> {
