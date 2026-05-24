@@ -404,6 +404,33 @@ img { display: block; max-width: 100%; }
   cursor: pointer;
 }
 .link-btn:hover { opacity: 0.75; }
+
+/* ---- Error boundary card ---- */
+.error-card {
+  display: flex;
+  gap: 16px;
+  padding: 24px;
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  border-radius: 4px;
+  color: #7f1d1d;
+}
+.error-card__icon { flex-shrink: 0; }
+.error-card__title { font-weight: 600; margin-bottom: 6px; }
+.error-card__msg {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  background: rgba(0,0,0,0.04);
+  padding: 8px 10px;
+  border-radius: 3px;
+  margin-bottom: 12px;
+  word-break: break-word;
+}
+.error-card__actions { display: flex; gap: 8px; }
+@media (prefers-color-scheme: dark) {
+  .error-card { background: rgba(220, 38, 38, 0.08); color: #fecaca; border-color: #7f1d1d; }
+  .error-card__msg { background: rgba(0,0,0,0.3); }
+}
 .tag--chief {
   background: linear-gradient(180deg, #fef3c7, #fde68a);
   color: #78350f;

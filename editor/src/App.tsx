@@ -8,6 +8,7 @@ import VolumesPanel from './pages/VolumesPanel'
 import HeroPanel from './pages/HeroPanel'
 import TeamAlumniPanel from './pages/TeamAlumniPanel'
 import EditorsPanel from './pages/EditorsPanel'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 const BASE_NAV = [
   { to: '/articles',   label: 'Articles',       icon: FileText },
@@ -59,11 +60,11 @@ function Shell({ children }: { children: React.ReactNode }) {
   )
 }
 
-function Protected({ children }: { children: React.ReactNode }) {
+function Protected({ children, label }: { children: React.ReactNode; label?: string }) {
   const { session, loading } = useAuth()
   if (loading) return <div className="loading-screen">Loading…</div>
   if (!session) return <Navigate to="/login" replace />
-  return <Shell>{children}</Shell>
+  return <Shell><ErrorBoundary label={label}>{children}</ErrorBoundary></Shell>
 }
 
 export default function App() {
@@ -72,11 +73,11 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<Navigate to="/articles" replace />} />
-        <Route path="/articles/*" element={<Protected><ArticlesPanel /></Protected>} />
-        <Route path="/volumes/*" element={<Protected><VolumesPanel /></Protected>} />
-        <Route path="/hero" element={<Protected><HeroPanel /></Protected>} />
-        <Route path="/people" element={<Protected><TeamAlumniPanel /></Protected>} />
-        <Route path="/editors" element={<Protected><EditorsPanel /></Protected>} />
+        <Route path="/articles/*" element={<Protected label="Articles"><ArticlesPanel /></Protected>} />
+        <Route path="/volumes/*" element={<Protected label="Volumes"><VolumesPanel /></Protected>} />
+        <Route path="/hero" element={<Protected label="Hero"><HeroPanel /></Protected>} />
+        <Route path="/people" element={<Protected label="Team & Alumni"><TeamAlumniPanel /></Protected>} />
+        <Route path="/editors" element={<Protected label="Editors"><EditorsPanel /></Protected>} />
         <Route path="*" element={<Navigate to="/articles" replace />} />
       </Routes>
     </AuthProvider>
