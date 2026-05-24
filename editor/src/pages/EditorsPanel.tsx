@@ -1,13 +1,25 @@
 import { useEffect, useState, FormEvent } from 'react'
-import { Crown, Mail, Trash2, UserPlus } from 'lucide-react'
+import { Crown, Mail, Lock, Trash2, UserPlus, Shuffle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useRole, type ProfileRow } from '../lib/role'
+
+// Build a 24-char random password from a safe charset (no ambiguous
+// characters like 0/O, l/1) so the chief can copy or read it aloud.
+function randomPassword(len = 24) {
+  const charset = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%&*'
+  const buf = new Uint8Array(len)
+  crypto.getRandomValues(buf)
+  let out = ''
+  for (let i = 0; i < len; i++) out += charset[buf[i] % charset.length]
+  return out
+}
 
 export default function EditorsPanel() {
   const { isChief, loading } = useRole()
   const [profiles, setProfiles] = useState<ProfileRow[]>([])
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviting, setInviting] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [creating, setCreating] = useState(false)
   const [message, setMessage] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
 
   const refetch = async () => {
@@ -39,29 +51,45 @@ export default function EditorsPanel() {
     )
   }
 
-  const onInvite = async (e: FormEvent) => {
+  const onCreate = async (e: FormEvent) => {
     e.preventDefault()
-    const email = inviteEmail.trim().toLowerCase()
+    const email = newEmail.trim().toLowerCase()
+    const password = newPassword
     if (!email) return
-    setInviting(true); setMessage(null)
+    if (password.length < 8) {
+      setMessage({ kind: 'err', text: 'Password must be at least 8 characters.' })
+      return
+    }
+    setCreating(true); setMessage(null)
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: window.location.origin,
+      // Grab the current access token so the function can verify we're chief.
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) throw new Error('Not signed in')
+      const resp = await fetch('/.netlify/functions/create-editor', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${session.access_token}`,
         },
+        body: JSON.stringify({ email, password }),
       })
-      if (error) throw error
+      const body = await resp.json().catch(() => ({}))
+      if (!resp.ok || !body?.ok) {
+        throw new Error(body?.error ?? `Request failed: ${resp.status}`)
+      }
       setMessage({
         kind: 'ok',
-        text: `Magic-link invitation sent to ${email}. They'll be added as an editor when they click the link in the email.`,
+        text: body.mode === 'reset'
+          ? `Password reset for ${email}. They can sign in now.`
+          : `Editor ${email} created. They can sign in now.`,
       })
-      setInviteEmail('')
+      setNewEmail('')
+      setNewPassword('')
+      refetch()
     } catch (err: any) {
-      setMessage({ kind: 'err', text: err.message ?? String(err) })
+      setMessage({ kind: 'err', text: err?.message ?? String(err) })
     } finally {
-      setInviting(false)
+      setCreating(false)
     }
   }
 
@@ -100,19 +128,45 @@ export default function EditorsPanel() {
         </div>
       </div>
 
-      <form className="invite" onSubmit={onInvite}>
-        <Mail size={14} />
-        <input
-          type="email"
-          required
-          placeholder="new-editor@example.com"
-          value={inviteEmail}
-          onChange={e => setInviteEmail(e.target.value)}
-        />
-        <button className="btn btn--primary" disabled={inviting}>
-          <UserPlus size={14} /> {inviting ? 'Sending…' : 'Invite editor'}
+      <form className="invite" onSubmit={onCreate}>
+        <div className="invite__field">
+          <Mail size={14} />
+          <input
+            type="email"
+            required
+            autoComplete="off"
+            placeholder="new-editor@example.com"
+            value={newEmail}
+            onChange={e => setNewEmail(e.target.value)}
+          />
+        </div>
+        <div className="invite__field">
+          <Lock size={14} />
+          <input
+            type="text"
+            required
+            autoComplete="off"
+            placeholder="password (min 8 chars)"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+          />
+          <button
+            type="button"
+            className="icon-btn"
+            title="Generate random password"
+            onClick={() => setNewPassword(randomPassword())}
+          >
+            <Shuffle size={14} />
+          </button>
+        </div>
+        <button className="btn btn--primary" disabled={creating}>
+          <UserPlus size={14} /> {creating ? 'Creating…' : 'Create editor'}
         </button>
       </form>
+      <p className="invite__hint">
+        The new editor signs in with this email + password immediately — no email round-trip.
+        Share the credentials with them over a secure channel; they can change the password later.
+      </p>
 
       {message && (
         <div className={`flash flash--${message.kind}`}>{message.text}</div>
