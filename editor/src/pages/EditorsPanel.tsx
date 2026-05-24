@@ -2,6 +2,7 @@ import { useEffect, useState, FormEvent } from 'react'
 import { Crown, Mail, Lock, Trash2, UserPlus, Shuffle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useRole, type ProfileRow } from '../lib/role'
+import { useTabRefocus } from '../lib/useTabRefocus'
 
 // Build a 24-char random password from a safe charset (no ambiguous
 // characters like 0/O, l/1) so the chief can copy or read it aloud.
@@ -23,18 +24,25 @@ export default function EditorsPanel() {
   const [message, setMessage] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null)
 
   const refetch = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('created_at', { ascending: true })
-    if (error) {
-      setMessage({ kind: 'err', text: error.message })
-      return
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: true })
+      if (error) {
+        setMessage({ kind: 'err', text: error.message })
+        return
+      }
+      setProfiles((data as ProfileRow[]) ?? [])
+    } catch (err: any) {
+      // AbortError from the 15 s fetch timeout, etc. — don't wipe
+      // the existing list; surface the error so the user can retry.
+      setMessage({ kind: 'err', text: err?.message ?? 'Failed to load editors' })
     }
-    setProfiles((data as ProfileRow[]) ?? [])
   }
 
   useEffect(() => { if (isChief) refetch() }, [isChief])
+  useTabRefocus(() => { if (isChief) refetch() })
 
   if (loading) return <div className="panel"><div className="panel__loading">Loading…</div></div>
 
