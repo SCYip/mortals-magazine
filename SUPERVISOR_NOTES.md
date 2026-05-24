@@ -72,7 +72,47 @@ Fixes:
 
 I also rescued the two orphaned auth.users records that existed in the DB.
 
+### 3c. ROOT-CAUSE FIX — proactive token refresh on window focus (bf98746)
+
+You called me out on adding a refresh feature instead of fixing the
+underlying bug — fair. The real bug was:
+
+supabase-js installs its own `visibilitychange` listener that calls
+`_recoverAndRefresh` to refresh an about-to-expire access_token.
+But when you app-switch (Chrome → WeChat), only the *Chrome window*
+loses focus — the editor *tab* stays "visible" in Chrome terms, so
+`visibilitychange` never fires. The access_token quietly expires
+in memory while you're in WeChat. When you come back the next REST
+call goes out with the stale Bearer header → Supabase returns 401
+→ supabase-js does not auto-retry → the panel renders
+`{ data: null, error: 401 }` and shows zero rows.
+
+The fix (`editor/src/lib/supabase.ts`) is two layers:
+
+1. **Proactive refresh on window focus.** A `window.focus` listener
+   reads the current session and calls `refreshSession()` if it's
+   within 60 s of expiry. Concurrent calls share one round trip
+   (coalesced via `refreshInFlight`).
+
+2. **401-retry in the fetch wrapper.** If a Supabase REST/Storage
+   response comes back 401 (race: token expired between our check
+   and the request going out), refresh the session and retry the
+   same request once with the new Authorization header.
+
+`useTabRefocus` is now plain soft-refetch again — no more
+`window.location.reload()` band-aid.
+
+**Validation:** ran a 12-cycle stress test (blur → 2.5 s hidden →
+focus → check rows = 16) on the deployed bundle. 12 of 12 pass, no
+empty state, no error banner. Cross-panel navigation post-cycles:
+all 4 panels load cleanly (Articles 16 / Volumes 3 / Hero 5 /
+People 8).
+
 ### 3b. `editor: tab-refocus does a full reload on list views` (8fedd53)
+(superseded by 3c above — reload-on-refocus removed, soft refetch
+restored)
+
+### 3b'. `editor: tab-refocus does a full reload on list views` (8fedd53)
 You reported one more time that switching to WeChat and back broke
 the panels. The old `useTabRefocus` soft-refetched, which raced with
 supabase-js's own visibilitychange handler — both hit the auth lock
