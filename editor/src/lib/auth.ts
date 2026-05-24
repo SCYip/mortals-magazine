@@ -18,9 +18,36 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null)
 
+// Synchronously read a non-expired session from localStorage if one is
+// there. This is the *initial state* for the Provider — it short-cuts
+// the chicken-and-egg where Protected renders before supabase-js has
+// asynchronously hydrated its in-memory session, so the user sees the
+// panel immediately on hard refresh / new tab.
+//
+// The async `getSession()` then runs and confirms or refines this. If
+// supabase-js disagrees (token actually invalid server-side), the
+// onAuthStateChange listener will fire SIGNED_OUT and we'll clear.
+function readPersistedSession(): Session | null {
+  try {
+    if (typeof window === 'undefined') return null
+    const key = Object.keys(window.localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'))
+    if (!key) return null
+    const raw = window.localStorage.getItem(key)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!parsed?.access_token || !parsed?.expires_at) return null
+    const now = Math.floor(Date.now() / 1000)
+    if (parsed.expires_at <= now) return null // already expired
+    return parsed as Session
+  } catch { return null }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [session, setSession] = useState<Session | null>(() => readPersistedSession())
+  // If we already have a session from storage, there's nothing to wait
+  // for — render immediately. getSession() / onAuthStateChange will
+  // refresh us in the background.
+  const [loading, setLoading] = useState(() => readPersistedSession() === null)
 
   useEffect(() => {
     let cancelled = false
@@ -29,21 +56,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s)
       setLoading(false)
     }
-    // Belt: getSession() should resolve fast, but supabase-js can hang
-    // when a token is mid-refresh. Catch + finally guarantees loading
-    // never sticks true on this branch.
+    // Confirm/refine the session via supabase-js. If this resolves with
+    // a valid session, great. If null, the storage probably had a
+    // session that supabase-js considers invalid — clear and redirect.
+    // We *don't* have a hard safety timer anymore; if getSession hangs
+    // the user just sees the panel from storage. Eventually
+    // onAuthStateChange fires with the truth.
     supabase.auth.getSession()
       .then(({ data }) => apply(data.session))
       .catch(err => {
         console.warn('[auth] getSession failed:', err?.message ?? err)
-        apply(null)
+        // Don't wipe the storage-derived session on a transient failure.
+        // Just stop the loading spinner so the panel can render.
+        if (!cancelled) setLoading(false)
       })
-    // Suspenders: even if the promise above never settles, give up
-    // after 4 seconds and let the UI render. The auth-state listener
-    // below will fix things once a real event arrives.
-    const safetyTimer = setTimeout(() => {
-      if (!cancelled) setLoading(false)
-    }, 4000)
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       if (cancelled) return
       setSession(s)
@@ -51,7 +77,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })
     return () => {
       cancelled = true
-      clearTimeout(safetyTimer)
       sub.subscription.unsubscribe()
     }
   }, [])
