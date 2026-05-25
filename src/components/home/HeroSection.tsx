@@ -37,12 +37,6 @@ export default function HeroSection() {
       </div>
 
       <div className="container container--wide hero__inner">
-        <div className="hero__eyebrow">
-          <span className="hero__eyebrow-rule" />
-          <span className="hero__eyebrow-text">A Student-Led Literary Quarterly · Est. 2021</span>
-          <span className="hero__eyebrow-rule" />
-        </div>
-
         <h1 className="hero__title">
           <span className="hero__title-word">The</span>
           <span className="hero__title-word hero__title-word--italic">Mortals</span>
