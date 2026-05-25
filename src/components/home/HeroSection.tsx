@@ -37,14 +37,6 @@ export default function HeroSection() {
       </div>
 
       <div className="container container--wide hero__inner">
-        <div className="hero__masthead" aria-hidden="true">
-          <span className="hero__masthead-cell">Issue Nº III</span>
-          <span className="hero__masthead-dot" />
-          <span className="hero__masthead-cell">Volume 2025–26</span>
-          <span className="hero__masthead-dot" />
-          <span className="hero__masthead-cell">BASIS China</span>
-        </div>
-
         <div className="hero__eyebrow">
           <span className="hero__eyebrow-rule" />
           <span className="hero__eyebrow-text">A Student-Led Literary Quarterly · Est. 2021</span>
