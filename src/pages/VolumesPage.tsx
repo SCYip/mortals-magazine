@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { Eye, Download } from 'lucide-react'
 import { volumes } from '../data/articles'
 import Reveal from '../components/ui/Reveal'
 import './VolumesPage.css'
@@ -62,6 +63,22 @@ export default function VolumesPage() {
                         <blockquote className="volume-card__issue-quote">
                           {issue.quote}
                         </blockquote>
+                        <div className="volume-card__issue-actions">
+                          <Link
+                            to={`/volumes/${vol.slug}/issue/${issue.slug}`}
+                            className="btn btn-primary btn-sm"
+                          >
+                            <Eye size={12} /> View Issue
+                          </Link>
+                          <a
+                            href={`/volumes/${vol.slug}/issue/${issue.slug}?print=1`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-ghost btn-sm"
+                          >
+                            <Download size={12} /> Download PDF
+                          </a>
+                        </div>
                       </div>
                     ))}
                   </div>

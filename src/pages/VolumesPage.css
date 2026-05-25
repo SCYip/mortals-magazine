@@ -189,8 +189,20 @@
   border: none;
   border-left: 2px solid var(--c-accent-h);
   padding: 0 0 0 var(--s-2);
-  margin: 0;
+  margin: 0 0 var(--s-3);
   line-height: 1.65;
+}
+
+.volume-card__issue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--s-2);
+}
+.volume-card__issue-actions .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 /* CTA */

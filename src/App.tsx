@@ -9,6 +9,7 @@ import GenrePage from './pages/GenrePage'
 import ColumnPage from './pages/ColumnPage'
 import AboutPage from './pages/AboutPage'
 import VolumesPage from './pages/VolumesPage'
+import IssuePage from './pages/IssuePage'
 import ScrollToTop from './components/ui/ScrollToTop'
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/about" element={<AboutPage />} />
           <Route path="/volumes" element={<VolumesPage />} />
           <Route path="/volumes/:slug" element={<VolumesPage />} />
+          <Route path="/volumes/:volSlug/issue/:issueSlug" element={<IssuePage />} />
         </Routes>
       </main>
       <Footer />
