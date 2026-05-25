@@ -25,7 +25,7 @@ const LINKS: NavItem[] = [
     sub: [
       { label: 'Whale Done · UN SDGs', to: '/column/whale-done' },
       { label: 'Inkmagination', to: '/column/inkmagination' },
-      { label: 'Forteenlines', to: '/column/forteenlines' },
+      { label: 'Fourteenlines', to: '/column/fourteenlines' },
       { label: 'Astronomical', to: '/column/astronomical' },
     ],
   },

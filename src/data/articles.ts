@@ -9,7 +9,13 @@ export interface Article {
   excerpt: string;
   content: string;
   imageUrl?: string;
+  /** @deprecated kept for backward compat — prefer columnSlugs */
   columnSlug?: string;
+  /** Columns this piece belongs to. Sourced from the article_columns
+   * junction in Supabase, or back-filled from columnSlug for the static
+   * seed. Multiple columns are supported (a poem can live in both
+   * Inkmagination and Fourteenlines, for example). */
+  columnSlugs?: string[];
   tags?: string[];
 }
 
@@ -257,10 +263,10 @@ export const columns: Column[] = [
     color: '#5b9bd5',
   },
   {
-    slug: 'forteenlines',
-    name: 'Forteenlines',
+    slug: 'fourteenlines',
+    name: 'Fourteenlines',
     tagline: "Poets' Society",
-    description: 'A dedicated column for poetry in all its forms — from traditional sonnets to experimental verse. Forteenlines celebrates the art of compression, the music of language, and the power of the well-turned line.',
+    description: 'Fourteenlines is dedicated to sharing the beauty of poetry with people everywhere. From traditional verses to contemporary works, we explore the power of words to spark imagination and transcend boundaries. We welcome everyone who wants to express their love for poetry and join the community inspired by the art of language.',
     imageUrl: '/images/col_fourteen_lines.avif',
     color: '#8b6fc9',
   },

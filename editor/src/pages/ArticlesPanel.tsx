@@ -154,6 +154,10 @@ function ArticleEditor() {
     tags: [], published: true,
   })
   const [columns, setColumns] = useState<ColumnRow[]>([])
+  // Multi-column membership — source of truth for the article ↔ columns
+  // relationship. The legacy `column_slug` on the row is auto-synced to
+  // the FIRST entry in this list so older code paths keep working.
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([])
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [loading, setLoading] = useState(!isNew)
@@ -167,15 +171,31 @@ function ArticleEditor() {
   useEffect(() => {
     if (isNew) return
     setLoading(true)
-    supabase.from('articles').select('*').eq('id', Number(id)).single()
-      .then(({ data, error }) => {
-        if (error || !data) { setErr(error?.message ?? 'Not found'); setLoading(false); return }
-        const r = data as ArticleRow
-        setRow(r)
-        setTagsInput((r.tags ?? []).join(', '))
-        setLoading(false)
-      })
+    // Fetch the article AND its column links in parallel.
+    Promise.all([
+      supabase.from('articles').select('*').eq('id', Number(id)).single(),
+      supabase.from('article_columns').select('column_slug').eq('article_id', Number(id)),
+    ]).then(([artRes, linkRes]) => {
+      if (artRes.error || !artRes.data) {
+        setErr(artRes.error?.message ?? 'Not found'); setLoading(false); return
+      }
+      const r = artRes.data as ArticleRow
+      setRow(r)
+      setTagsInput((r.tags ?? []).join(', '))
+      const linked = (linkRes.data ?? []).map((l: { column_slug: string }) => l.column_slug)
+      // If the junction is empty but the legacy column_slug is set,
+      // treat the legacy value as the initial selection so unmigrated
+      // rows still show their column.
+      setSelectedColumns(linked.length > 0 ? linked : (r.column_slug ? [r.column_slug] : []))
+      setLoading(false)
+    })
   }, [id, isNew])
+
+  const toggleColumn = (slug: string) => {
+    setSelectedColumns(prev =>
+      prev.includes(slug) ? prev.filter(s => s !== slug) : [...prev, slug],
+    )
+  }
 
   const onTitleChange = (v: string) => {
     setRow(s => ({ ...s, title: v, slug: isNew && !s.slug ? slugify(v) : s.slug }))
@@ -194,19 +214,33 @@ function ArticleEditor() {
     e.preventDefault()
     setBusy(true); setErr(null)
     try {
+      // Keep legacy column_slug in sync with the first selected column
+      // so consumers that haven't migrated yet still see *a* column.
       const payload = {
         ...row,
+        column_slug: selectedColumns[0] ?? null,
         tags: tagsInput.split(',').map(t => t.trim()).filter(Boolean),
         date_label: row.date_label || new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       }
+      let articleId: number
       if (isNew) {
         const { data, error } = await supabase.from('articles').insert(payload).select().single()
         if (error) throw error
-        navigate(`/articles/${data.id}`)
+        articleId = data.id
       } else {
-        const { error } = await supabase.from('articles').update(payload).eq('id', Number(id))
+        articleId = Number(id)
+        const { error } = await supabase.from('articles').update(payload).eq('id', articleId)
         if (error) throw error
       }
+      // Replace the article ↔ columns mapping: wipe and re-insert.
+      // Cheaper than a diff for a small membership set.
+      await supabase.from('article_columns').delete().eq('article_id', articleId)
+      if (selectedColumns.length > 0) {
+        const linkRows = selectedColumns.map(slug => ({ article_id: articleId, column_slug: slug }))
+        const { error: linkErr } = await supabase.from('article_columns').insert(linkRows)
+        if (linkErr) throw linkErr
+      }
+      if (isNew) navigate(`/articles/${articleId}`)
     } catch (e: any) { setErr(e?.message ?? 'Save failed') }
     finally { setBusy(false) }
   }
@@ -254,13 +288,32 @@ function ArticleEditor() {
               {GENRES.map(g => <option key={g.value} value={g.value}>{g.label}</option>)}
             </select>
           </label>
-          <label className="form__field">
-            <span>Column</span>
-            <select value={row.column_slug ?? ''} onChange={e => setRow(s => ({ ...s, column_slug: e.target.value || null }))}>
-              <option value="">— None —</option>
-              {columns.map(c => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-            </select>
-          </label>
+          <div className="form__field">
+            <span>
+              Columns
+              {selectedColumns.length > 0 && (
+                <span className="form__hint"> · {selectedColumns.length} selected</span>
+              )}
+            </span>
+            <div className="checkbox-grid">
+              {columns.map(c => {
+                const checked = selectedColumns.includes(c.slug)
+                return (
+                  <label key={c.slug} className={`checkbox-chip ${checked ? 'is-on' : ''}`}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => toggleColumn(c.slug)}
+                    />
+                    <span>{c.name}</span>
+                  </label>
+                )
+              })}
+              {columns.length === 0 && (
+                <span className="form__hint">No columns defined yet.</span>
+              )}
+            </div>
+          </div>
         </div>
 
         <label className="form__field">

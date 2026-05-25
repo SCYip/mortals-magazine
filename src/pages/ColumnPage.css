@@ -101,5 +101,13 @@
   font-style: italic;
 }
 
+.column-page__loading {
+  text-align: center;
+  padding: calc(var(--nav-h) + var(--s-7)) 0 var(--s-7);
+  color: var(--c-text-muted);
+  font-family: var(--f-serif);
+  font-style: italic;
+}
+
 @media (max-width: 1024px) { .column-page__grid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 640px) { .column-page__grid { grid-template-columns: 1fr; } }

@@ -65,7 +65,7 @@ type ArticleRow = {
   published: boolean
   published_at: string
 }
-const mapArticle = (r: ArticleRow): Article => ({
+const mapArticle = (r: ArticleRow, columnSlugs?: string[]): Article => ({
   id: String(r.id),
   slug: r.slug,
   title: r.title,
@@ -77,6 +77,12 @@ const mapArticle = (r: ArticleRow): Article => ({
   content: r.content,
   imageUrl: r.image_url ?? undefined,
   columnSlug: r.column_slug ?? undefined,
+  // Source of truth for column membership is the junction. If callers
+  // didn't pass any links, fall back to the legacy single-column field
+  // so the article still shows up on its column page.
+  columnSlugs: columnSlugs && columnSlugs.length > 0
+    ? columnSlugs
+    : (r.column_slug ? [r.column_slug] : []),
   tags: r.tags ?? undefined,
 })
 
@@ -126,22 +132,35 @@ type IssueRow = {
 //   (c) the table is empty (so the site shows existing content from day one,
 //       even before editors add anything via the panel).
 export async function getArticles(): Promise<Article[]> {
-  if (!hasSupabase || !supabase) return staticArticles
-  const { data, error } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('published', true)
-    .order('published_at', { ascending: false })
-  if (error || !data) {
-    console.warn('[api] getArticles fallback:', error?.message)
-    return staticArticles
+  if (!hasSupabase || !supabase) return withStaticColumnSlugs(staticArticles)
+  // Fetch articles + their column links in parallel. We then group the
+  // links by article_id and pass each group into mapArticle so every
+  // returned Article carries its full columnSlugs[] array.
+  const [artRes, linkRes] = await Promise.all([
+    supabase.from('articles').select('*').eq('published', true).order('published_at', { ascending: false }),
+    supabase.from('article_columns').select('article_id,column_slug'),
+  ])
+  if (artRes.error || !artRes.data) {
+    console.warn('[api] getArticles fallback:', artRes.error?.message)
+    return withStaticColumnSlugs(staticArticles)
   }
-  if (data.length === 0) return staticArticles
-  return (data as ArticleRow[]).map(mapArticle)
+  if (artRes.data.length === 0) return withStaticColumnSlugs(staticArticles)
+  const linksByArticle = new Map<number, string[]>()
+  for (const l of (linkRes.data ?? []) as Array<{ article_id: number; column_slug: string }>) {
+    const list = linksByArticle.get(l.article_id) ?? []
+    list.push(l.column_slug)
+    linksByArticle.set(l.article_id, list)
+  }
+  return (artRes.data as ArticleRow[]).map((r) =>
+    mapArticle(r, linksByArticle.get(r.id)),
+  )
 }
 
 export async function getArticleBySlug(slug: string): Promise<Article | null> {
-  if (!hasSupabase || !supabase) return staticArticles.find(a => a.slug === slug) ?? null
+  if (!hasSupabase || !supabase) {
+    const found = staticArticles.find(a => a.slug === slug)
+    return found ? withStaticColumnSlugs([found])[0] : null
+  }
   const { data, error } = await supabase
     .from('articles')
     .select('*')
@@ -150,9 +169,30 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
     .maybeSingle()
   if (error) {
     console.warn('[api] getArticleBySlug fallback:', error.message)
-    return staticArticles.find(a => a.slug === slug) ?? null
+    const found = staticArticles.find(a => a.slug === slug)
+    return found ? withStaticColumnSlugs([found])[0] : null
   }
-  return data ? mapArticle(data as ArticleRow) : null
+  if (!data) return null
+  // Fetch this article's column links so the detail page knows which
+  // columns it belongs to.
+  const { data: linkData } = await supabase
+    .from('article_columns')
+    .select('column_slug')
+    .eq('article_id', (data as ArticleRow).id)
+  const slugs = (linkData ?? []).map((l: { column_slug: string }) => l.column_slug)
+  return mapArticle(data as ArticleRow, slugs)
+}
+
+// Hydrate the static Article[] (which only has the legacy `columnSlug`
+// field) with the multi-column `columnSlugs` array for parity with the
+// Supabase code path. Used whenever we fall back to the static seed.
+function withStaticColumnSlugs(list: Article[]): Article[] {
+  return list.map((a) => ({
+    ...a,
+    columnSlugs: a.columnSlugs && a.columnSlugs.length > 0
+      ? a.columnSlugs
+      : (a.columnSlug ? [a.columnSlug] : []),
+  }))
 }
 
 export async function getColumns(): Promise<Column[]> {

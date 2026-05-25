@@ -1,16 +1,34 @@
 import { useParams, Navigate } from 'react-router-dom'
-import { columns, articles } from '../data/articles'
+import { useArticles, useColumns } from '../data/hooks'
 import ArticleCard from '../components/articles/ArticleCard'
 import Reveal from '../components/ui/Reveal'
 import './ColumnPage.css'
 
 export default function ColumnPage() {
   const { slug } = useParams<{ slug: string }>()
+  const { columns, loading: columnsLoading } = useColumns()
+  const { articles, loading: articlesLoading } = useArticles()
+  const loading = columnsLoading || articlesLoading
+
+  if (loading) {
+    return (
+      <div className="column-page">
+        <div className="container">
+          <p className="column-page__loading">Loading column…</p>
+        </div>
+      </div>
+    )
+  }
 
   const column = columns.find(c => c.slug === slug)
   if (!column) return <Navigate to="/" replace />
 
-  const columnArticles = articles.filter(a => a.columnSlug === slug)
+  // Match by the multi-column junction first, falling back to the
+  // legacy single-column field so unmigrated rows still appear.
+  const columnArticles = articles.filter((a) => {
+    if (a.columnSlugs && a.columnSlugs.length > 0) return a.columnSlugs.includes(slug!)
+    return a.columnSlug === slug
+  })
 
   return (
     <div className="column-page">

@@ -154,8 +154,24 @@ img { display: block; max-width: 100%; }
 }
 .form__field--inline { flex-direction: row; align-items: center; gap: 8px; }
 .form__field--inline > span { text-transform: none; letter-spacing: normal; font-weight: 400; font-size: 13px; color: var(--c-text); }
+.form__hint { text-transform: none; letter-spacing: normal; font-weight: 400; font-size: 11px; color: var(--c-muted); margin-left: 6px; }
 .form__actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 8px; border-top: 1px solid var(--c-border); }
 .form__error { padding: 10px 14px; background: var(--c-danger-soft); color: var(--c-danger); border-radius: 4px; font-size: 13px; }
+
+/* Multi-column membership chips — used on the article editor for
+   article ↔ columns assignment. Behaves as a row of toggleable pills. */
+.checkbox-grid { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }
+.checkbox-chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border: 1px solid var(--c-border); border-radius: 999px;
+  background: #fff; font-family: var(--f-ui); font-size: 12px;
+  color: var(--c-text); cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease, color 120ms ease;
+}
+.checkbox-chip:hover { border-color: var(--c-accent); }
+.checkbox-chip input { appearance: none; width: 12px; height: 12px; border: 1px solid var(--c-border); border-radius: 3px; margin: 0; cursor: pointer; }
+.checkbox-chip.is-on { background: var(--c-accent-soft); border-color: var(--c-accent); color: var(--c-accent); }
+.checkbox-chip.is-on input { background: var(--c-accent); border-color: var(--c-accent); }
 
 .upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .upload__preview { max-height: 120px; max-width: 200px; border: 1px solid var(--c-border); border-radius: 4px; object-fit: cover; }
