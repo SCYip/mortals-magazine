@@ -274,41 +274,54 @@ export const columns: Column[] = [
   },
 ];
 
+// Volume + issue text below is sourced verbatim from mortalsmag.com
+// (the live publication). When updating, prefer the live wording —
+// the editors' published copy is always canonical.
 export const volumes: Volume[] = [
   {
     slug: 'summer-fall-2024',
-    title: 'Summer/Fall 2024 Issue',
-    season: 'Summer/Fall',
+    title: 'Summer / Fall 2024 Issue',
+    season: 'Summer / Fall',
     year: '2024',
-    theme: 'The Inaugural Volume',
+    theme: 'Narrative',
     imageUrl: '/images/volume_summer_fall.png',
+    issues: [
+      {
+        slug: 'summer-fall-2024',
+        title: 'Summer / Fall 2024 Issue',
+        season: 'Summer / Fall',
+        year: '2024',
+        quote: '"On a clear day you can see forever"',
+        quoteAuthor: '',
+        content: `Human life rarely lasts beyond a century – we appear and vanish like flickers of light, a mere blink in the vast expanse of the cosmos. As mortals, our flesh may not endure through time's inevitability. Still, our arts, our cultures, and our thoughts may cross generations, as our magazine The Mortals seeks to broaden students' perspectives, aiming to impart knowledge, creativity, and the essence of humanity beyond the years spent on campus, beyond the "shelf life" of our mortal souls, celebrating individuality with connections to societies.\n\n"We do not need magic to transform our world. We carry all the power we need inside ourselves already." At our core, we, like J.K. Rowling, believe in the inner magic within each student. Everyone possesses a unique and powerful voice, ready to be heard and to inspire change. We are committed to nurturing this inner strength, empowering everyone to realize and express their authentic selves.\n\nThe first issue of The Mortals saw the realization of precisely this goal. Burgeoning young writers, poets, and storytellers joined us with their diverse and captivating writings. Aspiring young artists, developers, and designers joined us with their creative and innovative minds. From editors to designers, our mortal souls joined together to synthesize a harmony of literary and artistic expression.\n\nWe wish to express our gratitude for those who made possible this harmony of mortal souls. Thank you Mr. Dust for improving our ideas with concrete actions and constructive feedback; we are proud to have your incredible support and suggestions. Thank you Mr. Huizinga for proofreading our drafts from start to end; we are proud to say that all three student magazine editors at BIPH were once your students. Thank you Mr. Quirk and Ms. Hannah for leading us to the publishing stage; we are proud to be members of a growing and thriving literary community at Basis.\n\nThe first issue of The Mortals is just the end of a start – the road ahead is still so long, and our climb still so steep. On our way, we call upon young writers and artists to submit your work for consideration in our upcoming issues. We welcome anyone and everyone, beyond objectification and beyond doubt, beyond our limitations as mortals.\n\n— Timmy Zhang & Albert Wang, Editors-in-Chief`,
+      },
+    ],
+  },
+  {
+    slug: 'winter-2024-25',
+    title: 'Winter 2024-2025 Issue',
+    season: 'Winter',
+    year: '2024-2025',
+    theme: 'Narrative',
+    imageUrl: '/images/volume_winter.png',
     issues: [
       {
         slug: 'winter-2024-2025',
         title: 'Winter 2024-2025',
         season: 'Winter',
         year: '2024-2025',
-        quote: '"In seed time learn, in harvest teach, in winter enjoy." — William Blake',
+        quote: '"In seed time learn, in harvest teach, in winter enjoy."',
         quoteAuthor: 'William Blake',
-        content: `The Winter issue of The Mortals represents the culmination of our second volume, exploring themes of reflection, mortality, and the quiet beauty of introspection.\n\nAs we move through the cold months, we are reminded that winter is not merely a season of dormancy but of preparation — seeds lie underground, gathering strength for the burst of spring. In the same way, the writing in this issue invites us to look inward, to examine our assumptions, and to find warmth in the written word.\n\nFrom poetry that captures the fragility of human connection to essays that probe the depths of philosophical inquiry, this issue reflects the diversity and ambition of our contributors. We are grateful to every student who shared their voice with us, and to every reader who has joined us on this literary journey.\n\nAs always, we end where we begin — with the belief that words, like light, persist long after the flicker that created them.`,
+        content: `THE WINTER HARBINGER\n— Timmy Zhang, BIPH '25\n\nBright yellow clings to blue light,\nJingling in the starry, dotting winter-veiled sky.\nFluviatile Trees, with a thousand bristling fingers, weave\nBulbs and ribbons beneath the lush green leaves.\nSnowflakes, sharp and tight, sparkle fairly with the\nConfidence of an immaculate line of teeth—polished and\nProud and brimming among hights.\nThe wind glistens, swings and swoops and carries\nOur spirits high above onto the Olympus, as nature's eye\nSparkles with alpine delight.\nUs, wrapped in cool, fine moist.\nSoulbeats thudding like drums attracting an ancient figure:\nThe Old Grinning Man and his reindeers gliding\nAcross the sky.\nAs though Mortals fair from fair sometimes decline,\nBe cheerful, fellow players.\nOur brevity could be uplifted to essence of joy,\nTo feast on the music of the great light.\n\n— Albert Wang, BIPH '26\n\n"If the history of our shared narrative is a book, the 24-25 volume of The Mortals invites you to flip through its unfolding pages, flip beyond objectification – of stories, identities, and histories into rigidity, treaty, and monetization – and beyond doubt – of our stories, our identities, and our histories.\n\nWe invite you to flip to an empty page."`,
       },
     ],
-  },
-  {
-    slug: 'winter-2024-25',
-    title: 'Winter 2024-25 Issue',
-    season: 'Winter',
-    year: '2024-2025',
-    theme: 'Reflection & Resilience',
-    imageUrl: '/images/volume_winter.png',
-    issues: [],
   },
   {
     slug: '2025-2026',
     title: '2025-2026 Volume',
     season: 'Fall | Winter | Spring',
     year: '2025-2026',
-    theme: 'In Progress',
+    theme: 'Our Latest Volume',
     imageUrl: '',
     issues: [],
   },

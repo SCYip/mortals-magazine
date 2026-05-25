@@ -98,6 +98,10 @@
   line-height: 1.85;
   color: var(--c-text);
   margin: 0 0 var(--s-4);
+  /* Preserve single \n inside a paragraph as line breaks — needed so
+     editor letters that contain poetry (e.g. Winter 24-25's "THE
+     WINTER HARBINGER") render with one verse per line. */
+  white-space: pre-line;
 }
 .issue-page__body p:first-of-type::first-letter {
   font-family: var(--f-display);
