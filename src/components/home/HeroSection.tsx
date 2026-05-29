@@ -79,7 +79,7 @@ export default function HeroSection() {
           </div>
           <span className="hero__stat-rule" />
           <div className="hero__stat">
-            <span className="hero__stat-num">3×</span>
+            <span className="hero__stat-num">2×</span>
             <span className="hero__stat-label">Issues per year</span>
           </div>
           <span className="hero__stat-rule" />

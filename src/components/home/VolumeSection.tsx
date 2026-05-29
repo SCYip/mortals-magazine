@@ -12,9 +12,7 @@ export default function VolumeSection() {
             <h2 className="volume__title">A Year of Literary Exploration</h2>
             <div className="volume__seasons">
               <span>Fall</span>
-              <span className="volume__sep">/</span>
-              <span className="volume__season--active">Winter</span>
-              <span className="volume__sep">/</span>
+              <span className="volume__sep">&amp;</span>
               <span>Spring</span>
               <span className="volume__year">2025 – 2026</span>
             </div>
@@ -38,17 +36,17 @@ export default function VolumeSection() {
             <div className="volume__content">
               <span className="kicker">An annual reading commitment</span>
               <h3 className="volume__content-title">
-                Three issues. One unifying theme. <em>An entire year</em> of student voices.
+                Two issues. One unifying theme. <em>An entire year</em> of student voices.
               </h3>
               <p className="volume__content-body">
-                The Mortals runs a quarterly magazine funded, printed, and distributed across eleven
+                The Mortals runs a biannual magazine funded, printed, and distributed across eleven
                 BASIS China schools. Each school year, the editorial board decides on a unifying
                 theme for the volume — an abstract concept that propels reasoning and imagination.
-                Each of the three issues explores and examines an aspect of that theme.
+                Each of the two issues — Fall and Spring — explores and examines an aspect of that theme.
               </p>
 
               <div className="volume__facts">
-                <div className="volume__fact"><span className="volume__fact-num">3</span><span className="volume__fact-label">Seasonal issues</span></div>
+                <div className="volume__fact"><span className="volume__fact-num">2</span><span className="volume__fact-label">Seasonal issues</span></div>
                 <div className="volume__fact"><span className="volume__fact-num">11</span><span className="volume__fact-label">Campuses</span></div>
                 <div className="volume__fact"><span className="volume__fact-num">1</span><span className="volume__fact-label">Shared theme</span></div>
               </div>

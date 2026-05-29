@@ -15,9 +15,9 @@ export default function VolumesPage() {
             <span className="overline">The Archive</span>
             <h1>Our Volumes</h1>
             <p className="volumes-page__intro">
-              The Mortals runs a quarterly magazine that is funded by, printed by, and distributed across eleven BASIS China schools.
-              Each school year, the magazine's editorial board decides on a unifying theme for the volume — often an abstract concept
-              that propels reasoning and imagination.
+              The Mortals runs a biannual magazine that is funded by, printed by, and distributed across eleven BASIS China schools.
+              Each school year, the editorial board decides on a unifying theme for the volume — often an abstract concept
+              that propels reasoning and imagination — and the two issues, Fall and Spring, each explore an aspect of it.
             </p>
           </Reveal>
         </div>

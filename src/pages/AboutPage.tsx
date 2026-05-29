@@ -1,53 +1,24 @@
 import Reveal from '../components/ui/Reveal'
 import { editorsNote } from '../data/articles'
+import { useTeam, useAlumni } from '../data/hooks'
 import './AboutPage.css'
 
-const team = [
-  { name: 'Albert Wang', role: 'Editor-in-Chief', class: "'26", school: 'BIPH' },
-  { name: 'Timmy Zhang', role: 'Co-Editor', class: "'25", school: 'BIPH' },
-  { name: 'Jeff Li', role: 'Senior Editor', class: "'26", school: 'BIPH' },
-  { name: 'Jiayu Li', role: 'Editor', class: "'26", school: 'BIPH' },
-  { name: 'Serotonin', role: 'Poetry Editor', class: "'27", school: 'BIPH' },
-  { name: 'Peter Li', role: 'Staff Writer', class: "'25", school: 'BIPH' },
-  { name: 'David Cheng', role: 'Staff Writer', class: "'27", school: 'BIPH' },
-  { name: 'Tracy Shao Weiqi', role: 'Staff Writer', class: "'25", school: 'BIBWH' },
-]
-
-const alumni = [
-  {
-    name: 'Timmy Zhang',
-    role: 'Co-Editor in Chief, Vol. I',
-    class: "'25",
-    school: 'BIPH',
-    portrait: '/images/alumni/timmy.jpeg',
-    note: "Helped found The Mortals and edited the inaugural volume. Now studying abroad — but his fingerprints are on every page that came before.",
-  },
-  {
-    name: 'Ares',
-    role: 'Founding Contributor',
-    class: "'25",
-    school: 'BIPH',
-    portrait: '/images/alumni/ares.jpeg',
-    note: "Early staff writer who set the tone for the magazine's voice in fiction and poetry.",
-  },
-  {
-    name: 'Thomas',
-    role: 'Founding Contributor',
-    class: "'25",
-    school: 'BIPH',
-    portrait: '/images/alumni/thomas.jpeg',
-    note: "Editorial board alumnus whose work spans nonfiction essays and the magazine's earliest design decisions.",
-  },
-]
-
+// Faculty + staff acknowledgements. Kept in code (no DB table) — edit
+// here to add or remove names.
 const acknowledgements = [
   { name: 'Mr. Dust', role: 'Advisor & Mentor', note: 'Improving our ideas with concrete actions and constructive feedback' },
   { name: 'Mr. Huizinga', role: 'Proofreader', note: 'Proofreading our drafts from start to end; mentor to all three student magazine editors' },
   { name: 'Mr. Quirk', role: 'Head of BIPH & AP Literature', note: 'Leading us to the publishing stage with unwavering support' },
   { name: 'Ms. Hannah', role: 'English Department', note: 'Championing the literary community at BASIS' },
+  { name: 'Ms. Victoria', role: 'Club Advisor', note: 'Guiding The Mortals as our club advisor and steady source of support' },
+  { name: 'Mr. Ken', role: 'Head of Operations', note: 'Head of Operations at our school — the person who prints every issue for us' },
+  { name: 'Mr. Slonim', role: 'Head of English, BASIS Network', note: 'Head of English for the BASIS network, championing student writing across campuses' },
 ]
 
 export default function AboutPage() {
+  const { team } = useTeam()
+  const { alumni } = useAlumni()
+
   return (
     <div className="about-page">
       {/* Hero */}
@@ -88,7 +59,7 @@ export default function AboutPage() {
                 {[
                   { num: '11', label: 'BASIS China Schools' },
                   { num: '100+', label: 'Contributors' },
-                  { num: '3', label: 'Issues Per Year' },
+                  { num: '2', label: 'Issues Per Year' },
                   { num: '4', label: 'Standing Columns' },
                 ].map(s => (
                   <div key={s.label} className="about-page__stat">
@@ -121,7 +92,7 @@ export default function AboutPage() {
                   <div className="about-page__member-info">
                     <h3 className="about-page__member-name">{member.name}</h3>
                     <span className="about-page__member-role">{member.role}</span>
-                    <span className="about-page__member-class">{member.school} {member.class}</span>
+                    <span className="about-page__member-class">{member.school} {member.classYear}</span>
                   </div>
                 </div>
               </Reveal>
@@ -148,12 +119,12 @@ export default function AboutPage() {
               <Reveal key={person.name} delay={i * 90}>
                 <article className="about-page__alum">
                   <div className="about-page__alum-portrait">
-                    <img src={person.portrait} alt={person.name} loading="lazy" />
+                    <img src={person.portraitUrl ?? ''} alt={person.name} loading="lazy" />
                   </div>
                   <div className="about-page__alum-info">
                     <h3 className="about-page__alum-name">{person.name}</h3>
                     <span className="about-page__alum-role">{person.role}</span>
-                    <span className="about-page__alum-class">{person.school} &middot; {person.class}</span>
+                    <span className="about-page__alum-class">{person.school} &middot; {person.classYear}</span>
                     <p className="about-page__alum-note">{person.note}</p>
                   </div>
                 </article>

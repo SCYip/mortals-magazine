@@ -325,7 +325,7 @@ export const volumes: Volume[] = [
   {
     slug: '2025-2026',
     title: '2025-2026 Volume',
-    season: 'Fall | Winter | Spring',
+    season: 'Fall | Spring',
     year: '2025-2026',
     theme: 'Our Latest Volume',
     imageUrl: '',
