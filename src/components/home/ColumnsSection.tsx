@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
 import { ArrowUpRight } from 'lucide-react'
-import { columns } from '../../data/articles'
+import { useColumns } from '../../data/hooks'
 import Reveal from '../ui/Reveal'
 import './ColumnsSection.css'
 
 export default function ColumnsSection() {
+  const { columns } = useColumns()
   return (
     <section className="cols section section--deep">
       <div className="container container--wide">

@@ -6,8 +6,8 @@ import { useEffect, useState } from 'react'
 import type { Article, Column, Volume } from './articles'
 import {
   getArticles, getArticleBySlug, getColumns, getVolumes,
-  getHeroSlides, getTeam, getAlumni,
-  type HeroSlide, type TeamMember, type Alum,
+  getHeroSlides, getTeam, getAlumni, getAcknowledgements,
+  type HeroSlide, type TeamMember, type Alum, type Ack,
 } from './api'
 
 export function useArticles() {
@@ -89,4 +89,15 @@ export function useAlumni() {
     return () => { alive = false }
   }, [])
   return { alumni: data, loading }
+}
+
+export function useAcknowledgements() {
+  const [data, setData] = useState<Ack[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    let alive = true
+    getAcknowledgements().then(d => { if (alive) setData(d) }).finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [])
+  return { acknowledgements: data, loading }
 }

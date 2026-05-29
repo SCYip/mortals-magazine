@@ -1,23 +1,12 @@
 import Reveal from '../components/ui/Reveal'
 import { editorsNote } from '../data/articles'
-import { useTeam, useAlumni } from '../data/hooks'
+import { useTeam, useAlumni, useAcknowledgements } from '../data/hooks'
 import './AboutPage.css'
-
-// Faculty + staff acknowledgements. Kept in code (no DB table) — edit
-// here to add or remove names.
-const acknowledgements = [
-  { name: 'Mr. Dust', role: 'Advisor & Mentor', note: 'Improving our ideas with concrete actions and constructive feedback' },
-  { name: 'Mr. Huizinga', role: 'Proofreader', note: 'Proofreading our drafts from start to end; mentor to all three student magazine editors' },
-  { name: 'Mr. Quirk', role: 'Head of BIPH & AP Literature', note: 'Leading us to the publishing stage with unwavering support' },
-  { name: 'Ms. Hannah', role: 'English Department', note: 'Championing the literary community at BASIS' },
-  { name: 'Ms. Victoria', role: 'Club Advisor', note: 'Guiding The Mortals as our club advisor and steady source of support' },
-  { name: 'Mr. Ken', role: 'Head of Operations', note: 'Head of Operations at our school — the person who prints every issue for us' },
-  { name: 'Mr. Slonim', role: 'Head of English, BASIS Network', note: 'Head of English for the BASIS network, championing student writing across campuses' },
-]
 
 export default function AboutPage() {
   const { team } = useTeam()
   const { alumni } = useAlumni()
+  const { acknowledgements } = useAcknowledgements()
 
   return (
     <div className="about-page">

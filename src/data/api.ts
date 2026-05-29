@@ -48,6 +48,14 @@ export interface Alum {
   sortOrder: number
 }
 
+export interface Ack {
+  id: number
+  name: string
+  role: string
+  note: string
+  sortOrder: number
+}
+
 // ---------- Row → camelCase mappers ----------
 type ArticleRow = {
   id: number
@@ -310,6 +318,38 @@ export async function getAlumni(): Promise<Alum[]> {
     school: r.school,
     portraitUrl: r.portrait_url,
     note: r.note,
+    sortOrder: r.sort_order,
+  }))
+}
+
+// Faculty + staff acknowledgements shown on the About page. Falls back
+// to a bundled list so the section is never empty even before Supabase
+// is reachable or seeded.
+const STATIC_ACKS: Ack[] = [
+  { id: 1, name: 'Mr. Dust',     role: 'Advisor & Mentor',               note: 'Improving our ideas with concrete actions and constructive feedback', sortOrder: 0 },
+  { id: 2, name: 'Mr. Huizinga', role: 'Proofreader',                    note: 'Proofreading our drafts from start to end; mentor to all three student magazine editors', sortOrder: 1 },
+  { id: 3, name: 'Mr. Quirk',    role: 'Head of BIPH & AP Literature',   note: 'Leading us to the publishing stage with unwavering support', sortOrder: 2 },
+  { id: 4, name: 'Ms. Hannah',   role: 'English Department',             note: 'Championing the literary community at BASIS', sortOrder: 3 },
+  { id: 5, name: 'Ms. Victoria', role: 'Club Advisor',                   note: 'Guiding The Mortals as our club advisor and steady source of support', sortOrder: 4 },
+  { id: 6, name: 'Mr. Ken',      role: 'Head of Operations',             note: 'Head of Operations at our school — the person who prints every issue for us', sortOrder: 5 },
+  { id: 7, name: 'Mr. Slonim',   role: 'Head of English, BASIS Network', note: 'Head of English for the BASIS network, championing student writing across campuses', sortOrder: 6 },
+]
+
+export async function getAcknowledgements(): Promise<Ack[]> {
+  if (!hasSupabase || !supabase) return STATIC_ACKS
+  const { data, error } = await supabase
+    .from('acknowledgements')
+    .select('*')
+    .order('sort_order')
+  if (error || !data || data.length === 0) {
+    if (error) console.warn('[api] getAcknowledgements fallback:', error.message)
+    return STATIC_ACKS
+  }
+  return data.map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    role: r.role,
+    note: r.note ?? '',
     sortOrder: r.sort_order,
   }))
 }

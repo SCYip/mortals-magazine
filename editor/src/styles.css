@@ -158,6 +158,12 @@ img { display: block; max-width: 100%; }
 .form__actions { display: flex; justify-content: flex-end; gap: 10px; padding-top: 8px; border-top: 1px solid var(--c-border); }
 .form__error { padding: 10px 14px; background: var(--c-danger-soft); color: var(--c-danger); border-radius: 4px; font-size: 13px; }
 
+/* Color swatch dot — column accent-color preview in the Columns panel. */
+.swatch {
+  display: inline-block; width: 12px; height: 12px; border-radius: 3px;
+  vertical-align: middle; margin-right: 6px; border: 1px solid var(--c-border);
+}
+
 /* Multi-column membership chips — used on the article editor for
    article ↔ columns assignment. Behaves as a row of toggleable pills. */
 .checkbox-grid { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }

@@ -81,3 +81,11 @@ export interface AlumRow {
   note: string | null
   sort_order: number
 }
+
+export interface AckRow {
+  id: number
+  name: string
+  role: string
+  note: string | null
+  sort_order: number
+}
