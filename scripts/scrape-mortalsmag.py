@@ -49,7 +49,11 @@ def extract_body(raw):
     i = raw.find('data-hook="post-description"')
     if i < 0:
         return None
-    seg = raw[i:i+30000]
+    # Start AFTER the closing '>' of the opening tag, otherwise the tail
+    # of that tag (data-hook="post-description">) leaks into the body.
+    gt = raw.find('>', i)
+    start = gt + 1 if gt != -1 else i
+    seg = raw[start:start+30000]
     # Drop SVG blocks (share icons) entirely
     seg = re.sub(r'<svg.*?</svg>', ' ', seg, flags=re.DOTALL|re.IGNORECASE)
     seg = re.sub(r'<path[^>]*>', ' ', seg, flags=re.IGNORECASE)
