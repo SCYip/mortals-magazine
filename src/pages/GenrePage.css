@@ -1,5 +1,13 @@
 .genre-page { position: relative; }
 
+.genre-page__loading {
+  text-align: center;
+  padding: calc(var(--nav-h) + var(--s-7)) 0 var(--s-7);
+  color: var(--c-text-muted);
+  font-family: var(--f-serif);
+  font-style: italic;
+}
+
 .genre-page__hero {
   position: relative;
   padding: calc(var(--nav-h) + var(--s-6)) 0 var(--s-6);

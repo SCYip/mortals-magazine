@@ -1,5 +1,5 @@
 import { useParams, Link, Navigate } from 'react-router-dom'
-import { articles } from '../data/articles'
+import { useArticle, useArticles } from '../data/hooks'
 import ArticleCard from '../components/articles/ArticleCard'
 import Reveal from '../components/ui/Reveal'
 import './ArticlePage.css'
@@ -14,8 +14,21 @@ const genreLabels: Record<string, string> = {
 
 export default function ArticlePage() {
   const { slug } = useParams()
-  const article = articles.find(a => a.slug === slug)
+  // Read from the live (Supabase-backed) data, not the static seed —
+  // most articles only exist in the DB, so a static lookup would miss
+  // them and bounce the reader back to /all-articles.
+  const { article, loading } = useArticle(slug)
+  const { articles } = useArticles()
 
+  if (loading) {
+    return (
+      <div className="article-page">
+        <div className="container">
+          <p className="article-page__loading">Loading article…</p>
+        </div>
+      </div>
+    )
+  }
   if (!article) return <Navigate to="/all-articles" replace />
 
   const related = articles

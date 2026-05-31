@@ -1,5 +1,5 @@
 import { useParams, Navigate, Link } from 'react-router-dom'
-import { articles } from '../data/articles'
+import { useArticles } from '../data/hooks'
 import ArticleCard from '../components/articles/ArticleCard'
 import Reveal from '../components/ui/Reveal'
 import './GenrePage.css'
@@ -29,11 +29,22 @@ const GENRE_META: Record<string, { label: string; description: string }> = {
 
 export default function GenrePage() {
   const { genre } = useParams<{ genre: string }>()
+  const { articles, loading } = useArticles()
 
   if (!genre || !GENRE_META[genre]) return <Navigate to="/all-articles" replace />
 
   const meta = GENRE_META[genre]
   const filtered = articles.filter(a => a.genre === genre)
+
+  if (loading) {
+    return (
+      <div className="genre-page">
+        <div className="container">
+          <p className="genre-page__loading">Loading…</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="genre-page">
