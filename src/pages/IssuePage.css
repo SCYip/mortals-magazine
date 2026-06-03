@@ -103,16 +103,6 @@
      WINTER HARBINGER") render with one verse per line. */
   white-space: pre-line;
 }
-.issue-page__body p:first-of-type::first-letter {
-  font-family: var(--f-display);
-  font-size: 3.4rem;
-  font-weight: 700;
-  float: left;
-  line-height: 1;
-  padding: 4px 10px 0 0;
-  color: var(--c-accent-h);
-}
-
 /* Actions */
 .issue-page__actions {
   display: flex;
@@ -154,9 +144,6 @@
   .issue-page__quote p,
   .issue-page__quote cite,
   .issue-page .overline {
-    color: #000 !important;
-  }
-  .issue-page__body p:first-of-type::first-letter {
     color: #000 !important;
   }
   .issue-page__body {

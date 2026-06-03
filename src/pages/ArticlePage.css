@@ -101,15 +101,6 @@
   margin-bottom: 1.6em;
   color: var(--c-text-sec);
 }
-.article-page__prose p:first-of-type::first-letter {
-  font-family: var(--f-display);
-  font-size: 4.2rem;
-  font-weight: 700;
-  float: left;
-  line-height: 1;
-  padding: 0.08em 0.12em 0 0;
-  color: var(--c-accent-h);
-}
 .article-page__prose h2 {
   font-family: var(--f-display);
   font-size: 1.7rem;
