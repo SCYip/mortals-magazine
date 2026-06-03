@@ -67,6 +67,24 @@ export default function VolumesPanel() {
     setEditing(s => s ? { ...s, image_url: url } : s)
   }
 
+  // Attach the real magazine PDF to an issue. Uploaded to the
+  // volume-covers bucket (any file type allowed) and stored on
+  // issues.pdf_url — the public site's Download button serves it.
+  const [pdfBusy, setPdfBusy] = useState<string | null>(null)
+  const onUploadPdf = async (iss: IssueRow, file: File) => {
+    setPdfBusy(iss.slug)
+    try {
+      const url = await uploadImage('volume', file)
+      const { error } = await supabase.from('issues').update({ pdf_url: url }).eq('slug', iss.slug)
+      if (error) throw error
+      refetch()
+    } catch (e: any) {
+      alert(e?.message ?? 'PDF upload failed')
+    } finally {
+      setPdfBusy(null)
+    }
+  }
+
   return (
     <div className="panel">
       <div className="panel__head">
@@ -96,6 +114,24 @@ export default function VolumesPanel() {
                 <div className="card__title">{v.title}</div>
                 <div className="card__sub">{v.theme}</div>
                 <div className="card__sub">{vIssues.length} issue{vIssues.length === 1 ? '' : 's'}</div>
+                {vIssues.length > 0 && (
+                  <div className="issue-pdfs">
+                    <span className="card__images-label">Issue PDFs (Download button serves these)</span>
+                    {vIssues.map(iss => (
+                      <div key={iss.slug} className="issue-pdfs__row">
+                        <span className="issue-pdfs__title">{iss.title}</span>
+                        {iss.pdf_url
+                          ? <a className="issue-pdfs__has" href={iss.pdf_url} target="_blank" rel="noreferrer">PDF ✓</a>
+                          : <span className="issue-pdfs__none">no PDF</span>}
+                        <label className="upload__btn upload__btn--sm">
+                          {pdfBusy === iss.slug ? 'Uploading…' : (iss.pdf_url ? 'Replace' : 'Upload')}
+                          <input type="file" accept="application/pdf" hidden disabled={pdfBusy === iss.slug}
+                            onChange={e => e.target.files?.[0] && onUploadPdf(iss, e.target.files[0])} />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <div className="card__images">
                   <span className="card__images-label">Images</span>
                   <ImageStrip images={[v.image_url]} />

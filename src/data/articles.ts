@@ -46,6 +46,9 @@ export interface Issue {
   quote: string;
   quoteAuthor: string;
   content: string;
+  /** Optional uploaded magazine PDF. When present, the Download button
+   * serves this file instead of print-to-PDF of the issue page. */
+  pdfUrl?: string;
 }
 
 export const articles: Article[] = [

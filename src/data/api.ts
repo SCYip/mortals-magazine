@@ -130,6 +130,7 @@ type IssueRow = {
   quote: string
   quote_author: string
   content: string
+  pdf_url: string | null
   sort_order: number
 }
 
@@ -238,6 +239,7 @@ export async function getVolumes(): Promise<Volume[]> {
       quote: r.quote,
       quoteAuthor: r.quote_author,
       content: r.content,
+      pdfUrl: r.pdf_url ?? undefined,
     }
     const list = issuesByVol.get(r.volume_slug) ?? []
     list.push(i)

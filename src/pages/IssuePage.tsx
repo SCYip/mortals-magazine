@@ -32,6 +32,9 @@ export default function IssuePage() {
   useEffect(() => {
     if (!found) return
     if (!params.has('print')) return
+    // If a real magazine PDF is attached to this issue, hand the viewer
+    // that file instead of print-to-PDF of this page.
+    if (found.issue.pdfUrl) { window.location.href = found.issue.pdfUrl; return }
     const t = setTimeout(() => window.print(), 400)
     return () => clearTimeout(t)
   }, [found, params])
@@ -91,9 +94,15 @@ export default function IssuePage() {
 
         <Reveal>
           <div className="issue-page__actions">
-            <button className="btn btn-primary" onClick={() => window.print()}>
-              <Download size={14} /> Download (Save as PDF)
-            </button>
+            {issue.pdfUrl ? (
+              <a className="btn btn-primary" href={issue.pdfUrl} target="_blank" rel="noopener noreferrer">
+                <Download size={14} /> Download PDF
+              </a>
+            ) : (
+              <button className="btn btn-primary" onClick={() => window.print()}>
+                <Download size={14} /> Download (Save as PDF)
+              </button>
+            )}
             <button className="btn btn-ghost" onClick={() => window.print()}>
               <Printer size={14} /> Print
             </button>

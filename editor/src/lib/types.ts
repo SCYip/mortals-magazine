@@ -48,6 +48,7 @@ export interface IssueRow {
   quote: string
   quote_author: string
   content: string
+  pdf_url: string | null
   sort_order: number
 }
 

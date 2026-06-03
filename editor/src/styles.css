@@ -164,6 +164,17 @@ img { display: block; max-width: 100%; }
   vertical-align: middle; margin-right: 6px; border: 1px solid var(--c-border);
 }
 
+/* Per-issue PDF upload rows in the Volumes panel. */
+.issue-pdfs { margin: 10px 0; display: flex; flex-direction: column; gap: 6px; }
+.issue-pdfs__row {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 6px 8px; border: 1px solid var(--c-border); border-radius: 4px; background: #fff;
+}
+.issue-pdfs__title { flex: 1; font-size: 13px; color: var(--c-text); }
+.issue-pdfs__has { font-size: 12px; font-weight: 600; color: var(--c-accent); text-decoration: none; }
+.issue-pdfs__none { font-size: 12px; color: var(--c-muted); }
+.upload__btn--sm { padding: 6px 10px; font-size: 11px; }
+
 /* Multi-column membership chips — used on the article editor for
    article ↔ columns assignment. Behaves as a row of toggleable pills. */
 .checkbox-grid { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 2px; }
