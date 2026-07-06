@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom'
 import { Eye, Download } from 'lucide-react'
-import { volumes } from '../data/articles'
+import { useVolumes } from '../data/hooks'
 import Reveal from '../components/ui/Reveal'
 import './VolumesPage.css'
 
 export default function VolumesPage() {
+  // DB-driven (with the api layer's static fallback) so edits made in
+  // the editor panel — new issues, uploaded PDFs — show up here without
+  // a site redeploy.
+  const { volumes, loading } = useVolumes()
   return (
     <div className="volumes-page">
       {/* Hero */}
@@ -26,6 +30,9 @@ export default function VolumesPage() {
       {/* Volume Cards */}
       <section className="section">
         <div className="container">
+          {loading && volumes.length === 0 && (
+            <p className="volumes-page__loading">Loading volumes…</p>
+          )}
           <div className="volumes-page__grid">
             {volumes.map((vol, i) => (
               <Reveal key={vol.slug} delay={i * 100}>

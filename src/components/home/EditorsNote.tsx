@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import Reveal from '../ui/Reveal'
-import { editorsNote } from '../../data/articles'
+import { editorsNote } from '../../data/editorsNote'
 import './EditorsNote.css'
 
 export default function EditorsNote() {

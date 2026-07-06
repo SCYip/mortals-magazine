@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { Link, useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Printer, Download } from 'lucide-react'
 import { useVolumes } from '../data/hooks'
-import { volumes as staticVolumes } from '../data/articles'
+import type { Volume } from '../data/articles'
 import Reveal from '../components/ui/Reveal'
 import './IssuePage.css'
 
@@ -12,17 +12,16 @@ export default function IssuePage() {
   const navigate = useNavigate()
   const { volumes, loading } = useVolumes()
 
-  // Look up the issue in the live (Supabase-backed) volumes first,
-  // then fall back to the static seed bundled in articles.ts. That
-  // way the page works even if VolumesPage rendered from the seed
-  // while the DB has a slightly different set.
+  // Look up the issue in the volumes from useVolumes() — the api layer
+  // already falls back to the static seed when Supabase is unreachable,
+  // so no separate seed lookup is needed here.
   const found = useMemo(() => {
-    const search = (list: typeof staticVolumes) => {
+    const search = (list: Volume[]) => {
       const vol = list.find(v => v.slug === volSlug)
       const issue = vol?.issues.find(i => i.slug === issueSlug)
       return vol && issue ? { vol, issue } : null
     }
-    return search(volumes) ?? search(staticVolumes)
+    return search(volumes)
   }, [volumes, volSlug, issueSlug])
 
   // If the URL came in with ?print, fire the browser print dialog as

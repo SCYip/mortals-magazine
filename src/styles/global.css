@@ -3,7 +3,9 @@
    Light, editorial palette: royal-blue accents on white paper.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Crimson+Pro:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Playfair+Display:wght@400;600;700;900&display=swap');
+/* Fonts load once via the <link> in index.html (Playfair Display,
+   Crimson Pro, Inter) — the old @import here duplicated that request
+   and blocked first paint. */
 
 :root {
   /* ---- Blue & White Palette ---- */
@@ -478,4 +480,21 @@ a.link:hover { color: var(--c-accent-deep); border-bottom-color: var(--c-accent)
   .btn { padding: 12px 24px; font-size: 0.72rem; }
   .prose p:first-of-type::first-letter { font-size: 3rem; }
   .folio__rule { max-width: 80px; }
+}
+
+/* Suspense fallback while a lazy route chunk loads — tall enough that
+   the footer doesn't jump into view for a frame. */
+.route-fallback {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+}
+.route-fallback__mark {
+  color: var(--c-accent-h);
+  font-size: 1.4rem;
+  animation: route-fallback-pulse 1s ease-in-out infinite;
+}
+@keyframes route-fallback-pulse {
+  0%, 100% { opacity: 0.25; transform: scale(0.9); }
+  50%      { opacity: 1;    transform: scale(1.1); }
 }

@@ -1,5 +1,5 @@
 import Reveal from '../components/ui/Reveal'
-import { editorsNote } from '../data/articles'
+import { editorsNote } from '../data/editorsNote'
 import { useTeam, useAlumni, useAcknowledgements } from '../data/hooks'
 import './AboutPage.css'
 

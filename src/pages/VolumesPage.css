@@ -35,6 +35,14 @@
   line-height: 1.8;
 }
 
+.volumes-page__loading {
+  text-align: center;
+  padding: var(--s-6) 0;
+  color: var(--c-text-muted);
+  font-family: var(--f-serif);
+  font-style: italic;
+}
+
 /* Grid */
 .volumes-page__grid {
   display: grid;

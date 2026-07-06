@@ -8,15 +8,12 @@
  * components.
  */
 import { supabase, hasSupabase } from '../lib/supabase'
-import {
-  articles as staticArticles,
-  columns as staticColumns,
-  volumes as staticVolumes,
-  type Article,
-  type Column,
-  type Volume,
-  type Issue,
-} from './articles'
+import type { Article, Column, Volume, Issue } from './articles'
+
+// The static seed (full article/volume texts) is only needed when
+// Supabase is unreachable — load it on demand so those ~100KB of
+// bundled prose stay out of the entry chunk.
+const loadSeed = () => import('./articles')
 
 // ---------- New types ----------
 export interface HeroSlide {
@@ -66,7 +63,8 @@ type ArticleRow = {
   date_label: string
   genre: Article['genre']
   excerpt: string
-  content: string
+  /** Absent on list queries (see ARTICLE_LIST_COLUMNS); present on detail. */
+  content?: string
   image_url: string | null
   column_slug: string | null
   tags: string[] | null
@@ -82,7 +80,7 @@ const mapArticle = (r: ArticleRow, columnSlugs?: string[]): Article => ({
   date: r.date_label,
   genre: r.genre,
   excerpt: r.excerpt,
-  content: r.content,
+  content: r.content ?? '',
   imageUrl: r.image_url ?? undefined,
   columnSlug: r.column_slug ?? undefined,
   // Source of truth for column membership is the junction. If callers
@@ -134,26 +132,64 @@ type IssueRow = {
   sort_order: number
 }
 
+// ---------- Tiny stale-while-revalidate cache ----------
+// Every page mount used to re-fetch its data from Supabase, so
+// navigating Home → Articles → Home fired the same queries again and
+// re-showed loading states. Results now cache at module level: repeat
+// mounts resolve instantly, and a background refresh keeps content at
+// most TTL out of date. Inflight promises are shared so StrictMode's
+// double-mount doesn't double-fetch.
+const CACHE_TTL = 2 * 60 * 1000
+type CacheEntry = { value?: unknown; at: number; inflight?: Promise<unknown> }
+const swrCache = new Map<string, CacheEntry>()
+
+function swr<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const hit = swrCache.get(key)
+  const now = Date.now()
+  if (hit && hit.value !== undefined) {
+    if (now - hit.at > CACHE_TTL && !hit.inflight) {
+      hit.inflight = fetcher()
+        .then((v) => { swrCache.set(key, { value: v, at: Date.now() }); return v })
+        .catch(() => { hit.inflight = undefined; return hit.value as T })
+    }
+    return Promise.resolve(hit.value as T)
+  }
+  if (hit?.inflight) return hit.inflight as Promise<T>
+  const inflight = fetcher()
+    .then((v) => { swrCache.set(key, { value: v, at: Date.now() }); return v })
+    .catch((err) => { swrCache.delete(key); throw err })
+  swrCache.set(key, { at: now, inflight })
+  return inflight
+}
+
 // ---------- Fetchers ----------
 // Each fetcher falls back to the bundled static data when:
 //   (a) Supabase isn't configured (no env vars), or
 //   (b) the request errors, or
 //   (c) the table is empty (so the site shows existing content from day one,
 //       even before editors add anything via the panel).
-export async function getArticles(): Promise<Article[]> {
-  if (!hasSupabase || !supabase) return withStaticColumnSlugs(staticArticles)
+export const getArticles = () => swr('articles', fetchArticles)
+
+// List fetch deliberately EXCLUDES `content` — 50+ full article bodies
+// are hundreds of KB of JSON that no card/list view ever renders. The
+// article page fetches the one body it needs via getArticleBySlug.
+const ARTICLE_LIST_COLUMNS =
+  'id,slug,title,author,author_affiliation,date_label,genre,excerpt,image_url,column_slug,tags,published,published_at'
+
+async function fetchArticles(): Promise<Article[]> {
+  if (!hasSupabase || !supabase) return withStaticColumnSlugs((await loadSeed()).articles)
   // Fetch articles + their column links in parallel. We then group the
   // links by article_id and pass each group into mapArticle so every
   // returned Article carries its full columnSlugs[] array.
   const [artRes, linkRes] = await Promise.all([
-    supabase.from('articles').select('*').eq('published', true).order('published_at', { ascending: false }),
+    supabase.from('articles').select(ARTICLE_LIST_COLUMNS).eq('published', true).order('published_at', { ascending: false }),
     supabase.from('article_columns').select('article_id,column_slug'),
   ])
   if (artRes.error || !artRes.data) {
     console.warn('[api] getArticles fallback:', artRes.error?.message)
-    return withStaticColumnSlugs(staticArticles)
+    return withStaticColumnSlugs((await loadSeed()).articles)
   }
-  if (artRes.data.length === 0) return withStaticColumnSlugs(staticArticles)
+  if (artRes.data.length === 0) return withStaticColumnSlugs((await loadSeed()).articles)
   const linksByArticle = new Map<number, string[]>()
   for (const l of (linkRes.data ?? []) as Array<{ article_id: number; column_slug: string }>) {
     const list = linksByArticle.get(l.article_id) ?? []
@@ -165,9 +201,12 @@ export async function getArticles(): Promise<Article[]> {
   )
 }
 
-export async function getArticleBySlug(slug: string): Promise<Article | null> {
+export const getArticleBySlug = (slug: string) =>
+  swr(`article:${slug}`, () => fetchArticleBySlug(slug))
+
+async function fetchArticleBySlug(slug: string): Promise<Article | null> {
   if (!hasSupabase || !supabase) {
-    const found = staticArticles.find(a => a.slug === slug)
+    const found = (await loadSeed()).articles.find(a => a.slug === slug)
     return found ? withStaticColumnSlugs([found])[0] : null
   }
   const { data, error } = await supabase
@@ -178,7 +217,7 @@ export async function getArticleBySlug(slug: string): Promise<Article | null> {
     .maybeSingle()
   if (error) {
     console.warn('[api] getArticleBySlug fallback:', error.message)
-    const found = staticArticles.find(a => a.slug === slug)
+    const found = (await loadSeed()).articles.find(a => a.slug === slug)
     return found ? withStaticColumnSlugs([found])[0] : null
   }
   if (!data) return null
@@ -204,31 +243,35 @@ function withStaticColumnSlugs(list: Article[]): Article[] {
   }))
 }
 
-export async function getColumns(): Promise<Column[]> {
-  if (!hasSupabase || !supabase) return staticColumns
+export const getColumns = () => swr('columns', fetchColumns)
+
+async function fetchColumns(): Promise<Column[]> {
+  if (!hasSupabase || !supabase) return (await loadSeed()).columns
   const { data, error } = await supabase
     .from('columns')
     .select('*')
     .order('sort_order')
   if (error || !data) {
     console.warn('[api] getColumns fallback:', error?.message)
-    return staticColumns
+    return (await loadSeed()).columns
   }
-  if (data.length === 0) return staticColumns
+  if (data.length === 0) return (await loadSeed()).columns
   return (data as ColumnRow[]).map(mapColumn)
 }
 
-export async function getVolumes(): Promise<Volume[]> {
-  if (!hasSupabase || !supabase) return staticVolumes
+export const getVolumes = () => swr('volumes', fetchVolumes)
+
+async function fetchVolumes(): Promise<Volume[]> {
+  if (!hasSupabase || !supabase) return (await loadSeed()).volumes
   const [volsRes, issuesRes] = await Promise.all([
     supabase.from('volumes').select('*').order('sort_order'),
     supabase.from('issues').select('*').order('sort_order'),
   ])
   if (volsRes.error || issuesRes.error) {
     console.warn('[api] getVolumes fallback:', volsRes.error?.message ?? issuesRes.error?.message)
-    return staticVolumes
+    return (await loadSeed()).volumes
   }
-  if (!volsRes.data || volsRes.data.length === 0) return staticVolumes
+  if (!volsRes.data || volsRes.data.length === 0) return (await loadSeed()).volumes
   const issuesByVol = new Map<string, Issue[]>()
   for (const r of (issuesRes.data ?? []) as IssueRow[]) {
     const i: Issue = {
@@ -266,7 +309,9 @@ const STATIC_HERO_SLIDES: HeroSlide[] = [
   { id: 5, imageUrl: '/images/hero_slide_5.jpg', altText: '', sortOrder: 4 },
 ]
 
-export async function getHeroSlides(): Promise<HeroSlide[]> {
+export const getHeroSlides = () => swr('heroSlides', fetchHeroSlides)
+
+async function fetchHeroSlides(): Promise<HeroSlide[]> {
   if (!hasSupabase || !supabase) return STATIC_HERO_SLIDES
   const { data, error } = await supabase
     .from('hero_slides')
@@ -285,7 +330,9 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
   }))
 }
 
-export async function getTeam(): Promise<TeamMember[]> {
+export const getTeam = () => swr('team', fetchTeam)
+
+async function fetchTeam(): Promise<TeamMember[]> {
   if (!hasSupabase || !supabase) return []
   const { data, error } = await supabase
     .from('team_members')
@@ -305,7 +352,9 @@ export async function getTeam(): Promise<TeamMember[]> {
   }))
 }
 
-export async function getAlumni(): Promise<Alum[]> {
+export const getAlumni = () => swr('alumni', fetchAlumni)
+
+async function fetchAlumni(): Promise<Alum[]> {
   if (!hasSupabase || !supabase) return []
   const { data, error } = await supabase
     .from('alumni')
@@ -337,7 +386,9 @@ const STATIC_ACKS: Ack[] = [
   { id: 7, name: 'Mr. Slonim',   role: 'Head of English, BASIS Network', note: 'Head of English for the BASIS network, championing student writing across campuses', sortOrder: 6 },
 ]
 
-export async function getAcknowledgements(): Promise<Ack[]> {
+export const getAcknowledgements = () => swr('acknowledgements', fetchAcknowledgements)
+
+async function fetchAcknowledgements(): Promise<Ack[]> {
   if (!hasSupabase || !supabase) return STATIC_ACKS
   const { data, error } = await supabase
     .from('acknowledgements')
