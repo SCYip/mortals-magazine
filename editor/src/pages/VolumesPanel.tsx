@@ -67,22 +67,55 @@ export default function VolumesPanel() {
     setEditing(s => s ? { ...s, image_url: url } : s)
   }
 
-  // Attach the real magazine PDF to an issue. Uploaded to the
-  // volume-covers bucket (any file type allowed) and stored on
-  // issues.pdf_url — the public site's Download button serves it.
+  // Attach the real magazine PDF to an issue, stored on issues.pdf_url —
+  // the public site's Download button serves it. Two paths:
+  //  • Upload — for files under Supabase's ~50MB object cap.
+  //  • Link — for big print exports: attach the PDF as an asset on the
+  //    "magazine-pdfs" GitHub release (repo SCYip/mortals-magazine) and
+  //    paste its download URL here.
+  const SUPABASE_MAX_UPLOAD = 50 * 1024 * 1024
   const [pdfBusy, setPdfBusy] = useState<string | null>(null)
+  const setIssuePdfUrl = async (iss: IssueRow, url: string | null) => {
+    const { error } = await supabase.from('issues').update({ pdf_url: url }).eq('slug', iss.slug)
+    if (error) { alert(error.message); return }
+    refetch()
+  }
   const onUploadPdf = async (iss: IssueRow, file: File) => {
+    if (file.size > SUPABASE_MAX_UPLOAD) {
+      alert(
+        `"${file.name}" is ${(file.size / 1024 / 1024).toFixed(0)}MB — over the ~50MB upload limit, so uploading here will always fail.\n\n` +
+        'Host big PDFs on GitHub instead:\n' +
+        '1. Open github.com/SCYip/mortals-magazine/releases → "Magazine PDFs" → Edit → attach the file\n' +
+        "2. Copy the asset's download URL\n" +
+        '3. Click "Link" on this issue and paste it',
+      )
+      return
+    }
     setPdfBusy(iss.slug)
     try {
       const url = await uploadImage('volume', file)
-      const { error } = await supabase.from('issues').update({ pdf_url: url }).eq('slug', iss.slug)
-      if (error) throw error
-      refetch()
+      await setIssuePdfUrl(iss, url)
     } catch (e: any) {
-      alert(e?.message ?? 'PDF upload failed')
+      const msg = String(e?.message ?? '')
+      alert(/payload too large|maximum allowed size|413/i.test(msg)
+        ? 'Upload rejected: the file exceeds the storage size limit. Use "Link" with a GitHub-release URL instead.'
+        : (msg || 'PDF upload failed'))
     } finally {
       setPdfBusy(null)
     }
+  }
+  const onLinkPdf = (iss: IssueRow) => {
+    const input = prompt(
+      'Paste a public PDF URL for this issue (e.g. a GitHub release asset URL).\nLeave empty to remove the current PDF.',
+      iss.pdf_url ?? '',
+    )
+    if (input === null) return
+    const url = input.trim()
+    if (url && !/^https?:\/\//i.test(url)) {
+      alert('That does not look like a URL (must start with http/https).')
+      return
+    }
+    setIssuePdfUrl(iss, url || null)
   }
 
   return (
@@ -128,6 +161,9 @@ export default function VolumesPanel() {
                           <input type="file" accept="application/pdf" hidden disabled={pdfBusy === iss.slug}
                             onChange={e => e.target.files?.[0] && onUploadPdf(iss, e.target.files[0])} />
                         </label>
+                        <button type="button" className="upload__btn upload__btn--sm" onClick={() => onLinkPdf(iss)}>
+                          Link
+                        </button>
                       </div>
                     ))}
                   </div>
