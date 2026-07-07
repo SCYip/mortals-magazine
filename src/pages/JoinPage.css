@@ -27,7 +27,7 @@
   margin-bottom: var(--s-4);
 }
 .join-page__intro {
-  max-width: 680px;
+  max-width: 700px;
   margin: 0 auto var(--s-5);
   color: var(--c-text-sec);
   font-family: var(--f-serif);
@@ -48,50 +48,104 @@
   font-weight: 700;
   letter-spacing: -0.015em;
 }
-
-/* Role cards */
-.join-page__roles {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--s-4);
+.join-page__section-sub {
+  max-width: 560px;
+  margin: var(--s-3) auto 0;
+  font-family: var(--f-serif);
+  font-size: 1.02rem;
+  line-height: 1.7;
+  color: var(--c-text-sec);
 }
-.join-role {
-  position: relative;
+
+/* Departments — full-width "masthead" blocks: department on the left,
+   its roles nested as a colophon list on the right. */
+.join-page__depts {
+  max-width: 980px;
+  margin: 0 auto;
+}
+.join-dept {
+  display: grid;
+  grid-template-columns: 34% 1fr;
+  gap: var(--s-5);
+  align-items: start;
   background: var(--c-card);
   border: 1px solid var(--c-border);
   border-radius: 3px;
-  padding: var(--s-4);
-  height: 100%;
+  padding: var(--s-5);
   transition: border-color var(--t-base), transform var(--t-base), box-shadow var(--t-base);
 }
-.join-role:hover {
+.join-dept:hover {
   border-color: var(--c-border-h);
   transform: translateY(-3px);
   box-shadow: 0 14px 40px rgba(13, 27, 60, 0.10);
 }
-.join-role__dept {
-  display: inline-block;
-  font-family: var(--f-ui);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: var(--c-accent-h);
-  margin-bottom: var(--s-2);
+.join-page__depts .fine-rule { margin: var(--s-4) 0; }
+
+.join-dept__icon {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-accent-soft);
+  border-radius: 3px;
+  color: var(--c-accent);
+  margin-bottom: var(--s-3);
 }
-.join-role__title {
+.join-dept__name {
   font-family: var(--f-display);
-  font-size: 1.15rem;
+  font-size: 1.6rem;
   font-weight: 700;
-  line-height: 1.25;
-  margin-bottom: var(--s-2);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  margin-bottom: var(--s-1);
   color: var(--c-text);
 }
-.join-role__desc {
+.join-dept__rail .kicker { margin-bottom: var(--s-3); }
+.join-dept__blurb {
   font-family: var(--f-serif);
-  font-size: 0.95rem;
-  line-height: 1.65;
+  font-size: 1rem;
+  line-height: 1.7;
   color: var(--c-text-sec);
+  margin-bottom: var(--s-4);
+}
+.join-dept__rail .btn { align-self: flex-start; }
+
+/* Role rows reuse the .colophon primitive; only the "key" is upsized so
+   the role title reads as a proper name rather than a tiny caps label. */
+.join-dept__role-name {
+  font-family: var(--f-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--c-text);
+}
+
+/* Partnership — deliberately narrow + centered so it never reads as a
+   fifth department. */
+.join-page__partner {
+  text-align: center;
+  max-width: 640px;
+  margin: 0 auto;
+}
+.join-page__partner .overline { margin-bottom: var(--s-3); }
+.join-page__partner-icon {
+  margin: 0 auto var(--s-3);
+}
+.join-page__partner-title {
+  font-family: var(--f-display);
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin-bottom: var(--s-3);
+}
+.join-page__partner-desc {
+  font-family: var(--f-serif);
+  font-size: 1.08rem;
+  line-height: 1.8;
+  color: var(--c-text-sec);
+  margin-bottom: var(--s-5);
 }
 
 /* Process steps */
@@ -180,10 +234,10 @@
 }
 a.join-page__contact-item:hover { color: var(--c-accent-h); }
 
-@media (max-width: 1024px) {
-  .join-page__roles { grid-template-columns: repeat(2, 1fr); }
+/* Department blocks collapse to a single stacked column on tablet/mobile. */
+@media (max-width: 900px) {
+  .join-dept { grid-template-columns: 1fr; gap: var(--s-4); }
 }
 @media (max-width: 640px) {
-  .join-page__roles { grid-template-columns: 1fr; }
   .join-page__steps { grid-template-columns: 1fr; gap: var(--s-5); }
 }
