@@ -65,9 +65,7 @@ export default function Footer() {
               </a>
             </li>
             <li>
-              <a href="https://johnny1003.github.io/mortalssaff/departments" target="_blank" rel="noopener noreferrer">
-                Join the Team <ExternalLink size={12} />
-              </a>
+              <Link to="/join">Join the Team</Link>
             </li>
             <li><Link to="/about">About Us</Link></li>
             <li><a href="mailto:themortals@basischina.com">Contact</a></li>

@@ -16,6 +16,7 @@ const ColumnPage = lazy(() => import('./pages/ColumnPage'))
 const AboutPage = lazy(() => import('./pages/AboutPage'))
 const VolumesPage = lazy(() => import('./pages/VolumesPage'))
 const IssuePage = lazy(() => import('./pages/IssuePage'))
+const JoinPage = lazy(() => import('./pages/JoinPage'))
 
 function RouteFallback() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="/volumes" element={<VolumesPage />} />
             <Route path="/volumes/:slug" element={<VolumesPage />} />
             <Route path="/volumes/:volSlug/issue/:issueSlug" element={<IssuePage />} />
+            <Route path="/join" element={<JoinPage />} />
           </Routes>
         </Suspense>
       </main>

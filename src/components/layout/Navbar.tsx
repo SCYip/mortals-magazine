@@ -173,13 +173,9 @@ export default function Navbar() {
           >
             Submit
           </a>
-          <a
-            href="https://johnny1003.github.io/mortalssaff/departments"
-            target="_blank" rel="noopener noreferrer"
-            className="btn btn-primary btn-sm"
-          >
+          <Link to="/join" className="btn btn-primary btn-sm">
             Join Us
-          </a>
+          </Link>
         </div>
 
         <button
@@ -218,11 +214,7 @@ export default function Navbar() {
               target="_blank" rel="noopener noreferrer"
               className="btn btn-ghost"
             >Submit</a>
-            <a
-              href="https://johnny1003.github.io/mortalssaff/departments"
-              target="_blank" rel="noopener noreferrer"
-              className="btn btn-primary"
-            >Join Us</a>
+            <Link to="/join" className="btn btn-primary">Join Us</Link>
           </div>
         </nav>
       </div>

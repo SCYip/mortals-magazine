@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
 import { useHeroSlides } from '../../data/hooks'
 import './HeroSection.css'
@@ -63,13 +64,9 @@ export default function HeroSection() {
           >
             Submit Your Work <ArrowRight size={14} />
           </a>
-          <a
-            href="https://johnny1003.github.io/mortalssaff/departments"
-            target="_blank" rel="noopener noreferrer"
-            className="btn btn-ghost"
-          >
+          <Link to="/join" className="btn btn-ghost">
             Join the Team
-          </a>
+          </Link>
         </div>
 
         <div className="hero__meta">

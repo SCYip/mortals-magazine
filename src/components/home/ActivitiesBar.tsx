@@ -27,9 +27,9 @@ const ITEMS = [
     icon: Users,
     label: 'Join the Team',
     desc: 'Editing, design, publicity, writing — find your place on The Mortals editorial board.',
-    href: 'https://johnny1003.github.io/mortalssaff/departments',
-    cta: 'See Departments',
-    external: true,
+    href: '/join',
+    cta: 'See Open Roles',
+    external: false,
   },
 ]
 
