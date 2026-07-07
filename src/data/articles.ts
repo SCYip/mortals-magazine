@@ -341,10 +341,9 @@ export const volumes: Volume[] = [
         quote: '"Autumn is a second spring when every leaf is a flower"',
         quoteAuthor: 'Albert Camus',
         content: `STRIKE\n— Albert Wang, BIPH '26\n\nTo aim for the bull's eye is to prey on and pray to the most elusive of targets humans can imagine: precision, clarity, and an irrefutable sense of purpose directed toward a perfect circle encased with concentric aspirations.\n\n...\n\nThe bull, unlike its symbolic eye, is not singular or abstract. It is not captured in a moving point on a free body diagram or given birth by a parametric function of time on the Cartesian plane; it is a creature of flesh and blood, of motion and multiplicity. To fixate on its eye is to ignore the rest of its being, its duality, its place in the ecosystem and biosphere, or at least the simple fact that a single bull has, hopefully, more than one eye. Same for our world. It contains multitudes: diverse cultures, conflicting truths, and fluid identities that organically weave together living, breathing tapestry, never converging to a single point in its stitches and interstices, atoms and molecules.\n\n...\n\nThe poet John Keats, in his "Ode to a Grecian Urn," writes of "Bold Lover, never, never canst thou kiss." This unattainable embrace of the immortal lover – the fated arrow of Cupid forever shy of its mark – embodies the bittersweet beauty of striving. To miss, Keats suggests, is not necessarily to fail; it is to remain in an eternity of praxis, a state of perpetual action and becoming, where the pursuit itself is the point as opposed to the point pursued.\n\n...\n\nThe bull's dual eyes reflect the infinite possibilities of coexistence. The spring issue of The Mortals invites readers to explore this multiplicity. To question the fixing of and the fixation on the bull's-eye. To embrace uncertainty, fluidity, and abundance of lived experience and identities. For in the end, the world does not revolve around a single target. It contains multitudes, and so must we.`,
-        // Hot-linked to the original Wix-hosted file: the print-quality
-        // export is 462MB — over Supabase's free-tier 50MB object cap.
-        // Replace via the editor panel once a web-quality export exists.
-        pdfUrl: 'https://www.mortalsmag.com/_files/ugd/9a8413_98b8dfaa1daf4ce3be7c799bbb290c52.pdf',
+        // Web-optimized (153MB) from the 484MB print export, hosted as a
+        // GitHub release asset — no size cap, no Supabase egress.
+        pdfUrl: 'https://github.com/SCYip/mortals-magazine/releases/download/magazine-pdfs/The-Mortals-Fall-2025-Bulls-eye.pdf',
       },
       {
         slug: 'winter-2025-26',
@@ -354,7 +353,7 @@ export const volumes: Volume[] = [
         quote: '"What is in me is stronger than I am."',
         quoteAuthor: 'Albert Camus',
         content: `two contrapuntals of one plum blossom\n— Albert Wang, BIPH '26\n\nwithin the rime, i conjure\nfor a spark. i claim\nthe brutal silence--this\nnumbness. i paint the\ncanvas of the drifting snow.\ni bloom to end\n\nan iridescent fire\nthat which burns to shatter\nstagnation. i bleed\nvermilion on the\nwind. the spring defeats\nthe cold. i dared to be.\n\nPlay around. Try three different ways of reading this contrapuntal piece: each side as its own poem, then a third poem formed by reading both columns together from left to right.`,
-        pdfUrl: 'https://datercxlvabgiieqqucr.supabase.co/storage/v1/object/public/volume-covers/issues/winter-2025-26.pdf',
+        pdfUrl: 'https://github.com/SCYip/mortals-magazine/releases/download/magazine-pdfs/The-Mortals-Winter-2025-26-Iridescence.pdf',
       },
     ],
   },
