@@ -162,10 +162,64 @@ function swr<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
   return inflight
 }
 
+// ---------- Backend reachability guard ----------
+// A configured-but-unreachable backend used to be the worst case: the
+// browser sat on the request for ~10s before the fallback below could run,
+// so every data-driven page showed "Loading…" that whole time. Now each
+// query races a short timer and RESOLVES — never rejects — with a
+// Postgrest-shaped error, so each fetcher's existing `if (error)` branch
+// serves the seed instead. A network-level failure also trips a circuit
+// breaker: for the next minute callers skip Supabase entirely, so one dead
+// backend can't make every subsequent page pay the timeout again.
+const SUPABASE_TIMEOUT_MS = 2500
+const BREAKER_COOLDOWN_MS = 60 * 1000
+
+let breakerUntil = 0
+/** True while Supabase is known-unreachable; callers go straight to seed. */
+const backendDown = () => Date.now() < breakerUntil
+
+type QueryResult<T> = { data: T | null; error: { message: string } | null }
+
+/**
+ * Wrap a Supabase query so it can never hang or throw.
+ *
+ * The breaker is tripped only by a timeout or a rejected request (the
+ * backend is unreachable). A query that comes back carrying a Postgrest
+ * error means the backend IS reachable and answered — that's a normal
+ * per-query fallback, not a reason to bypass Supabase for everything else.
+ */
+function q<T>(query: PromiseLike<QueryResult<T>>, label: string): Promise<QueryResult<T>> {
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = (res: QueryResult<T>, unreachable: boolean) => {
+      if (settled) return
+      settled = true
+      clearTimeout(timer)
+      if (unreachable) breakerUntil = Date.now() + BREAKER_COOLDOWN_MS
+      resolve(res)
+    }
+    const timer = setTimeout(
+      () => finish(
+        { data: null, error: { message: `${label} timed out after ${SUPABASE_TIMEOUT_MS}ms` } },
+        true,
+      ),
+      SUPABASE_TIMEOUT_MS,
+    )
+    query.then(
+      (res) => finish(res as QueryResult<T>, false),
+      (err) => finish(
+        { data: null, error: { message: `${label}: ${err?.message ?? String(err)}` } },
+        true,
+      ),
+    )
+  })
+}
+
 // ---------- Fetchers ----------
 // Each fetcher falls back to the bundled static data when:
-//   (a) Supabase isn't configured (no env vars), or
-//   (b) the request errors, or
+//   (a) Supabase isn't configured (no env vars), or the backend is
+//       currently known-unreachable (circuit breaker above), or
+//   (b) the request errors or times out, or
 //   (c) the table is empty (so the site shows existing content from day one,
 //       even before editors add anything via the panel).
 export const getArticles = () => swr('articles', fetchArticles)
@@ -177,13 +231,13 @@ const ARTICLE_LIST_COLUMNS =
   'id,slug,title,author,author_affiliation,date_label,genre,excerpt,image_url,column_slug,tags,published,published_at'
 
 async function fetchArticles(): Promise<Article[]> {
-  if (!hasSupabase || !supabase) return withStaticColumnSlugs((await loadSeed()).articles)
+  if (!hasSupabase || !supabase || backendDown()) return withStaticColumnSlugs((await loadSeed()).articles)
   // Fetch articles + their column links in parallel. We then group the
   // links by article_id and pass each group into mapArticle so every
   // returned Article carries its full columnSlugs[] array.
   const [artRes, linkRes] = await Promise.all([
-    supabase.from('articles').select(ARTICLE_LIST_COLUMNS).eq('published', true).order('published_at', { ascending: false }),
-    supabase.from('article_columns').select('article_id,column_slug'),
+    q(supabase.from('articles').select(ARTICLE_LIST_COLUMNS).eq('published', true).order('published_at', { ascending: false }), 'getArticles'),
+    q(supabase.from('article_columns').select('article_id,column_slug'), 'getArticles.links'),
   ])
   if (artRes.error || !artRes.data) {
     console.warn('[api] getArticles fallback:', artRes.error?.message)
@@ -205,16 +259,19 @@ export const getArticleBySlug = (slug: string) =>
   swr(`article:${slug}`, () => fetchArticleBySlug(slug))
 
 async function fetchArticleBySlug(slug: string): Promise<Article | null> {
-  if (!hasSupabase || !supabase) {
+  if (!hasSupabase || !supabase || backendDown()) {
     const found = (await loadSeed()).articles.find(a => a.slug === slug)
     return found ? withStaticColumnSlugs([found])[0] : null
   }
-  const { data, error } = await supabase
-    .from('articles')
-    .select('*')
-    .eq('slug', slug)
-    .eq('published', true)
-    .maybeSingle()
+  const { data, error } = await q(
+    supabase
+      .from('articles')
+      .select('*')
+      .eq('slug', slug)
+      .eq('published', true)
+      .maybeSingle(),
+    'getArticleBySlug',
+  )
   if (error) {
     console.warn('[api] getArticleBySlug fallback:', error.message)
     const found = (await loadSeed()).articles.find(a => a.slug === slug)
@@ -223,10 +280,13 @@ async function fetchArticleBySlug(slug: string): Promise<Article | null> {
   if (!data) return null
   // Fetch this article's column links so the detail page knows which
   // columns it belongs to.
-  const { data: linkData } = await supabase
-    .from('article_columns')
-    .select('column_slug')
-    .eq('article_id', (data as ArticleRow).id)
+  const { data: linkData } = await q(
+    supabase
+      .from('article_columns')
+      .select('column_slug')
+      .eq('article_id', (data as ArticleRow).id),
+    'getArticleBySlug.links',
+  )
   const slugs = (linkData ?? []).map((l: { column_slug: string }) => l.column_slug)
   return mapArticle(data as ArticleRow, slugs)
 }
@@ -246,11 +306,14 @@ function withStaticColumnSlugs(list: Article[]): Article[] {
 export const getColumns = () => swr('columns', fetchColumns)
 
 async function fetchColumns(): Promise<Column[]> {
-  if (!hasSupabase || !supabase) return (await loadSeed()).columns
-  const { data, error } = await supabase
-    .from('columns')
-    .select('*')
-    .order('sort_order')
+  if (!hasSupabase || !supabase || backendDown()) return (await loadSeed()).columns
+  const { data, error } = await q(
+    supabase
+      .from('columns')
+      .select('*')
+      .order('sort_order'),
+    'getColumns',
+  )
   if (error || !data) {
     console.warn('[api] getColumns fallback:', error?.message)
     return (await loadSeed()).columns
@@ -262,10 +325,10 @@ async function fetchColumns(): Promise<Column[]> {
 export const getVolumes = () => swr('volumes', fetchVolumes)
 
 async function fetchVolumes(): Promise<Volume[]> {
-  if (!hasSupabase || !supabase) return (await loadSeed()).volumes
+  if (!hasSupabase || !supabase || backendDown()) return (await loadSeed()).volumes
   const [volsRes, issuesRes] = await Promise.all([
-    supabase.from('volumes').select('*').order('sort_order'),
-    supabase.from('issues').select('*').order('sort_order'),
+    q(supabase.from('volumes').select('*').order('sort_order'), 'getVolumes'),
+    q(supabase.from('issues').select('*').order('sort_order'), 'getVolumes.issues'),
   ])
   if (volsRes.error || issuesRes.error) {
     console.warn('[api] getVolumes fallback:', volsRes.error?.message ?? issuesRes.error?.message)
@@ -312,12 +375,15 @@ const STATIC_HERO_SLIDES: HeroSlide[] = [
 export const getHeroSlides = () => swr('heroSlides', fetchHeroSlides)
 
 async function fetchHeroSlides(): Promise<HeroSlide[]> {
-  if (!hasSupabase || !supabase) return STATIC_HERO_SLIDES
-  const { data, error } = await supabase
-    .from('hero_slides')
-    .select('*')
-    .eq('active', true)
-    .order('sort_order')
+  if (!hasSupabase || !supabase || backendDown()) return STATIC_HERO_SLIDES
+  const { data, error } = await q(
+    supabase
+      .from('hero_slides')
+      .select('*')
+      .eq('active', true)
+      .order('sort_order'),
+    'getHeroSlides',
+  )
   if (error || !data || data.length === 0) {
     if (error) console.warn('[api] getHeroSlides fallback:', error.message)
     return STATIC_HERO_SLIDES
@@ -333,12 +399,15 @@ async function fetchHeroSlides(): Promise<HeroSlide[]> {
 export const getTeam = () => swr('team', fetchTeam)
 
 async function fetchTeam(): Promise<TeamMember[]> {
-  if (!hasSupabase || !supabase) return []
-  const { data, error } = await supabase
-    .from('team_members')
-    .select('*')
-    .eq('active', true)
-    .order('sort_order')
+  if (!hasSupabase || !supabase || backendDown()) return []
+  const { data, error } = await q(
+    supabase
+      .from('team_members')
+      .select('*')
+      .eq('active', true)
+      .order('sort_order'),
+    'getTeam',
+  )
   if (error || !data) return []
   return data.map((r: any) => ({
     id: r.id,
@@ -355,11 +424,14 @@ async function fetchTeam(): Promise<TeamMember[]> {
 export const getAlumni = () => swr('alumni', fetchAlumni)
 
 async function fetchAlumni(): Promise<Alum[]> {
-  if (!hasSupabase || !supabase) return []
-  const { data, error } = await supabase
-    .from('alumni')
-    .select('*')
-    .order('sort_order')
+  if (!hasSupabase || !supabase || backendDown()) return []
+  const { data, error } = await q(
+    supabase
+      .from('alumni')
+      .select('*')
+      .order('sort_order'),
+    'getAlumni',
+  )
   if (error || !data) return []
   return data.map((r: any) => ({
     id: r.id,
@@ -389,11 +461,14 @@ const STATIC_ACKS: Ack[] = [
 export const getAcknowledgements = () => swr('acknowledgements', fetchAcknowledgements)
 
 async function fetchAcknowledgements(): Promise<Ack[]> {
-  if (!hasSupabase || !supabase) return STATIC_ACKS
-  const { data, error } = await supabase
-    .from('acknowledgements')
-    .select('*')
-    .order('sort_order')
+  if (!hasSupabase || !supabase || backendDown()) return STATIC_ACKS
+  const { data, error } = await q(
+    supabase
+      .from('acknowledgements')
+      .select('*')
+      .order('sort_order'),
+    'getAcknowledgements',
+  )
   if (error || !data || data.length === 0) {
     if (error) console.warn('[api] getAcknowledgements fallback:', error.message)
     return STATIC_ACKS
