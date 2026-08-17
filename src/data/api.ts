@@ -173,10 +173,23 @@ function swr<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
 // backend can't make every subsequent page pay the timeout again.
 const SUPABASE_TIMEOUT_MS = 2500
 const BREAKER_COOLDOWN_MS = 60 * 1000
+// A query still running after this long is probably going to fail, so start
+// pulling the seed chunk down alongside it. Tuned to sit well above a normal
+// query (<500ms) so a healthy backend never downloads the seed needlessly,
+// while a dead one has the fallback in memory the moment the timeout fires.
+const SEED_WARM_MS = 800
 
 let breakerUntil = 0
 /** True while Supabase is known-unreachable; callers go straight to seed. */
 const backendDown = () => Date.now() < breakerUntil
+
+let seedWarmed = false
+/** Kick off the seed import without awaiting it; import() caches the module. */
+const warmSeed = () => {
+  if (seedWarmed) return
+  seedWarmed = true
+  loadSeed().catch(() => { seedWarmed = false })
+}
 
 type QueryResult<T> = { data: T | null; error: { message: string } | null }
 
@@ -195,9 +208,11 @@ function q<T>(query: PromiseLike<QueryResult<T>>, label: string): Promise<QueryR
       if (settled) return
       settled = true
       clearTimeout(timer)
+      clearTimeout(warm)
       if (unreachable) breakerUntil = Date.now() + BREAKER_COOLDOWN_MS
       resolve(res)
     }
+    const warm = setTimeout(warmSeed, SEED_WARM_MS)
     const timer = setTimeout(
       () => finish(
         { data: null, error: { message: `${label} timed out after ${SUPABASE_TIMEOUT_MS}ms` } },

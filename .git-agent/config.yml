@@ -1,0 +1,11 @@
+scopes:
+    - name: src
+      description: Frontend application code in src/; does not cover admin dashboards in editor/ or database structure in supabase/.
+    - name: editor
+      description: Admin dashboard in editor/; does not cover the public frontend site code in src/.
+    - name: db
+      description: Database schemas and migrations in supabase/; does not cover static assets in public/ or CLI utilities in scripts/.
+    - name: scripts
+      description: Data scraping and seeding utilities in scripts/; does not cover web application development in src/.
+    - name: root
+      description: Build and deployment configuration in d:/; does not cover application logic in src/.
