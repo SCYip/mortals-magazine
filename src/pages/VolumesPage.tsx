@@ -108,7 +108,7 @@ export default function VolumesPage() {
                   Browse All Articles
                 </Link>
                 <a
-                  href="https://forms.office.com/pages/responsepage.aspx?id=4uHGy7umAkC73G2okqBRp6xsy5ePBBNGqQHOmRnLOqhUM1VMMjFIWDVVMU1OOUhIMFA4WUIyS05DMy4u"
+                  href="https://forms.cloud.microsoft/r/82x3JkRjBR"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="btn btn-ghost"

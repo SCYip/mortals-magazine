@@ -6,7 +6,7 @@ import './JoinPage.css'
 // Application form (Microsoft Forms) — the single entry point for
 // joining ANY department. Applicants pick their department in the form.
 export const JOIN_FORM_URL =
-  'https://forms.cloud.microsoft/pages/responsepage.aspx?id=4uHGy7umAkC73G2okqBRp51qqtBFJf1KraiwmuB_4-FUMFpKQjdOU1ZXSTA3RzlTVlhHT0ZMQUNWMy4u&route=shorturl'
+  'https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=4uHGy7umAkC73G2okqBRp51qqtBFJf1KraiwmuB_4-FUME1GVzBVTlAxWFg2WDM4TVlCNThJUDcwSC4u'
 
 // The four departments from the original staff site. You apply to a
 // DEPARTMENT; the specific roles nested inside are what you'd actually do.

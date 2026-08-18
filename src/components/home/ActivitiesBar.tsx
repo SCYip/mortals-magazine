@@ -18,7 +18,7 @@ const ITEMS = [
     icon: FileEdit,
     label: 'Submit Your Work',
     desc: 'Every voice matters — fiction, nonfiction, poetry, essays. Share your writing with The Mortals.',
-    href: 'https://forms.office.com/pages/responsepage.aspx?id=4uHGy7umAkC73G2okqBRp6xsy5ePBBNGqQHOmRnLOqhUM1VMMjFIWDVVMU1OOUhIMFA4WUIyS05DMy4u',
+    href: 'https://forms.cloud.microsoft/r/82x3JkRjBR',
     cta: 'Submit Now',
     external: true,
   },

@@ -60,7 +60,7 @@ export default function Footer() {
           <h4 className="footer__title">Get Involved</h4>
           <ul className="footer__list">
             <li>
-              <a href="https://forms.office.com/pages/responsepage.aspx?id=4uHGy7umAkC73G2okqBRp6xsy5ePBBNGqQHOmRnLOqhUM1VMMjFIWDVVMU1OOUhIMFA4WUIyS05DMy4u" target="_blank" rel="noopener noreferrer">
+              <a href="https://forms.cloud.microsoft/r/82x3JkRjBR" target="_blank" rel="noopener noreferrer">
                 Submit Your Work <ExternalLink size={12} />
               </a>
             </li>
