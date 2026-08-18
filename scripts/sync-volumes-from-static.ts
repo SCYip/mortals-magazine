@@ -61,6 +61,9 @@ async function run() {
       quote: iss.quote,
       quote_author: iss.quoteAuthor,
       content: iss.content,
+      // Without this a resynced DB has no PDF links, so the issue page
+      // silently degrades to the browser's print-to-PDF fallback.
+      pdf_url: iss.pdfUrl ?? null,
       sort_order: idx,
     })),
   )
