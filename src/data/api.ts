@@ -174,10 +174,14 @@ function swr<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
 const SUPABASE_TIMEOUT_MS = 2500
 const BREAKER_COOLDOWN_MS = 60 * 1000
 // A query still running after this long is probably going to fail, so start
-// pulling the seed chunk down alongside it. Tuned to sit well above a normal
-// query (<500ms) so a healthy backend never downloads the seed needlessly,
-// while a dead one has the fallback in memory the moment the timeout fires.
-const SEED_WARM_MS = 800
+// pulling the seed chunk down alongside it, leaving the fallback in memory by
+// the time the timeout fires.
+//
+// Measured against the live backend from China, a healthy query returns in
+// ~1.0-1.2s. An earlier 800ms threshold sat below that, so every page load
+// downloaded a seed chunk it then never used. 1800ms clears real latency with
+// margin while still giving the seed a head start on the 2500ms timeout.
+const SEED_WARM_MS = 1800
 
 let breakerUntil = 0
 /** True while Supabase is known-unreachable; callers go straight to seed. */
