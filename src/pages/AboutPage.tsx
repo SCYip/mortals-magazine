@@ -63,7 +63,6 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Team */}
       {/* Leadership — current chiefs first, then the people who held the roles before */}
       <section className="about-page__leaders section">
         <div className="container">
@@ -106,6 +105,7 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Team */}
       <section className="about-page__team section">
         <div className="container">
           <Reveal>
