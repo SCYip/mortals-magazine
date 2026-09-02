@@ -1,9 +1,10 @@
 import Reveal from '../components/ui/Reveal'
 import { editorsNote } from '../data/editorsNote'
-import { useTeam, useAlumni, useAcknowledgements } from '../data/hooks'
+import { useTeam, useAlumni, useAcknowledgements, useLeaders } from '../data/hooks'
 import './AboutPage.css'
 
 export default function AboutPage() {
+  const { leaders } = useLeaders()
   const { team } = useTeam()
   const { alumni } = useAlumni()
   const { acknowledgements } = useAcknowledgements()
@@ -63,6 +64,48 @@ export default function AboutPage() {
       </section>
 
       {/* Team */}
+      {/* Leadership — current chiefs first, then the people who held the roles before */}
+      <section className="about-page__leaders section">
+        <div className="container">
+          <Reveal>
+            <div className="about-page__section-header">
+              <span className="overline">Who Runs It</span>
+              <h2>Leadership</h2>
+            </div>
+          </Reveal>
+
+          {([false, true] as const).map(group => {
+            const list = leaders.filter(l => l.former === group)
+            if (list.length === 0) return null
+            return (
+              <div key={String(group)} className="about-page__leaders-group">
+                <Reveal>
+                  <h3 className="about-page__leaders-label">
+                    {group ? 'Former leadership' : 'Current leadership'}
+                  </h3>
+                </Reveal>
+                <div className="about-page__leaders-grid">
+                  {list.map((person, i) => (
+                    <Reveal key={person.name} delay={i * 50}>
+                      <div className="about-page__leader">
+                        <div className="about-page__leader-avatar">{person.name.charAt(0)}</div>
+                        <div className="about-page__leader-info">
+                          <h4 className="about-page__leader-name">{person.name}</h4>
+                          <span className="about-page__leader-role">{person.role}</span>
+                          {person.college && (
+                            <span className="about-page__leader-college">{person.college}</span>
+                          )}
+                        </div>
+                      </div>
+                    </Reveal>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
       <section className="about-page__team section">
         <div className="container">
           <Reveal>

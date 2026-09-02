@@ -492,3 +492,96 @@
   .about-page__team-grid { grid-template-columns: 1fr; }
   .about-page__depts-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------- Leadership ---------- */
+/* Sits above the editorial board. Deliberately reuses the member-card shape so
+   the two sections read as one family, with the group label as the only extra
+   structure separating current from former leadership. */
+.about-page__leaders { background: var(--c-bg-deep); }
+
+.about-page__leaders-group + .about-page__leaders-group { margin-top: var(--s-6); }
+
+.about-page__leaders-label {
+  font-family: var(--f-ui);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--c-text-muted);
+  text-align: center;
+  margin-bottom: var(--s-4);
+}
+
+.about-page__leaders-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-3);
+}
+
+.about-page__leader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-5) var(--s-3);
+  background: var(--c-card);
+  border: 1px solid var(--c-border);
+  border-radius: 3px;
+  text-align: center;
+  transition: all var(--t-fast);
+  height: 100%;
+}
+.about-page__leader:hover {
+  border-color: var(--c-border-h);
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(13, 27, 60, 0.10);
+}
+
+.about-page__leader-avatar {
+  width: 64px;
+  height: 64px;
+  background: linear-gradient(135deg, var(--c-accent), var(--c-accent-deep));
+  color: #fff;
+  font-family: var(--f-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--c-border-h);
+}
+
+.about-page__leader-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.about-page__leader-name {
+  font-family: var(--f-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--c-text);
+}
+.about-page__leader-role {
+  font-family: var(--f-ui);
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--c-accent-h);
+}
+.about-page__leader-college {
+  font-family: var(--f-serif);
+  font-size: 0.85rem;
+  font-style: italic;
+  color: var(--c-text-muted);
+}
+
+@media (max-width: 1024px) {
+  .about-page__leaders-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .about-page__leaders-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .about-page__leaders-grid { grid-template-columns: 1fr; }
+}

@@ -7,7 +7,8 @@ import type { Article, Column, Volume } from './articles'
 import {
   getArticles, getArticleBySlug, getColumns, getVolumes,
   getHeroSlides, getTeam, getAlumni, getAcknowledgements,
-  type HeroSlide, type TeamMember, type Alum, type Ack,
+  getLeaders,
+  type HeroSlide, type TeamMember, type Alum, type Ack, type Leader,
 } from './api'
 
 export function useArticles() {
@@ -100,4 +101,15 @@ export function useAcknowledgements() {
     return () => { alive = false }
   }, [])
   return { acknowledgements: data, loading }
+}
+
+export function useLeaders() {
+  const [data, setData] = useState<Leader[]>([])
+  const [loading, setLoading] = useState(true)
+  useEffect(() => {
+    let alive = true
+    getLeaders().then(d => { if (alive) setData(d) }).finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [])
+  return { leaders: data, loading }
 }

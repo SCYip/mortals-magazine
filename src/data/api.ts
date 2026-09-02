@@ -500,3 +500,73 @@ async function fetchAcknowledgements(): Promise<Ack[]> {
     sortOrder: r.sort_order,
   }))
 }
+
+// ---------- Leaders ----------
+// The leadership roster (see migration 005). Kept separate from TeamMember
+// and Alum on purpose: a leader is a distinct role from a board member or a
+// past contributor, so the same person can appear here as a former chief
+// without being duplicated into the editorial board.
+export interface Leader {
+  id: number
+  name: string
+  role: string
+  /** University a former leader went on to. Null for current leaders. */
+  college: string | null
+  former: boolean
+  sortOrder: number
+}
+
+type LeaderRow = {
+  id: number
+  name: string
+  role: string
+  college: string | null
+  former: boolean
+  sort_order: number
+}
+
+const mapLeader = (r: LeaderRow): Leader => ({
+  id: r.id,
+  name: r.name,
+  role: r.role,
+  college: r.college,
+  former: r.former,
+  sortOrder: r.sort_order,
+})
+
+// Bundled fallback so the roster still renders when the backend is paused —
+// the same failure that blanked the team and alumni sections before.
+const STATIC_LEADERS: Leader[] = [
+  { id: 1,  name: 'David Cheng', role: 'Editor in Chief',        college: null,         former: false, sortOrder: 0 },
+  { id: 2,  name: 'Alex Huang',  role: 'Editor in Chief',        college: null,         former: false, sortOrder: 1 },
+  { id: 3,  name: 'David Zhu',   role: 'Lead Website Developer', college: null,         former: false, sortOrder: 2 },
+  { id: 4,  name: 'Joey Yip',    role: 'Lead Website Developer', college: null,         former: false, sortOrder: 3 },
+  { id: 5,  name: 'Morning Lu',  role: 'HR Manager',             college: null,         former: false, sortOrder: 4 },
+  { id: 6,  name: 'Katie Lam',   role: 'Design Head',            college: null,         former: false, sortOrder: 5 },
+  { id: 7,  name: 'Sherry You',  role: 'Design Head',            college: null,         former: false, sortOrder: 6 },
+  { id: 8,  name: 'Timmy Zhang', role: 'Editor in Chief',        college: 'Stanford',   former: true,  sortOrder: 0 },
+  { id: 9,  name: 'Albert Wang', role: 'Editor in Chief',        college: 'Stanford',   former: true,  sortOrder: 1 },
+  { id: 10, name: 'Connie Xu',   role: 'Design Head',            college: 'Swarthmore', former: true,  sortOrder: 2 },
+  { id: 11, name: 'Susan He',    role: 'Design Head',            college: 'Cambridge',  former: true,  sortOrder: 3 },
+  { id: 12, name: 'Cindy Tian',  role: 'Publicity Head',         college: 'Grinnell',   former: true,  sortOrder: 4 },
+  { id: 13, name: 'Johnny Li',   role: 'Lead Website Developer', college: 'WashU',      former: true,  sortOrder: 5 },
+]
+
+export const getLeaders = () => swr('leaders', fetchLeaders)
+
+async function fetchLeaders(): Promise<Leader[]> {
+  if (!hasSupabase || !supabase || backendDown()) return STATIC_LEADERS
+  const { data, error } = await q(
+    supabase
+      .from('leaders')
+      .select('*')
+      .order('former')
+      .order('sort_order'),
+    'getLeaders',
+  )
+  if (error || !data || data.length === 0) {
+    if (error) console.warn('[api] getLeaders fallback:', error.message)
+    return STATIC_LEADERS
+  }
+  return (data as LeaderRow[]).map(mapLeader)
+}
