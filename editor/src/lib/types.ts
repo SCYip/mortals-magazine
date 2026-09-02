@@ -90,3 +90,14 @@ export interface AckRow {
   note: string | null
   sort_order: number
 }
+
+export interface LeaderRow {
+  id: number
+  name: string
+  role: string
+  /** University a former leader went on to. Null/empty for current leaders. */
+  college: string | null
+  former: boolean
+  active: boolean
+  sort_order: number
+}

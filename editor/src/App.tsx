@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
-import { LogOut, FileText, BookOpen, Image as ImageIcon, Users, Crown, Tag, Heart } from 'lucide-react'
+import { LogOut, FileText, BookOpen, Image as ImageIcon, Users, Crown, Tag, Heart, Star } from 'lucide-react'
 import { useAuth, AuthProvider } from './lib/auth'
 import { useRole } from './lib/role'
 import LoginPage from './pages/LoginPage'
@@ -8,6 +8,7 @@ import VolumesPanel from './pages/VolumesPanel'
 import ColumnsPanel from './pages/ColumnsPanel'
 import HeroPanel from './pages/HeroPanel'
 import TeamAlumniPanel from './pages/TeamAlumniPanel'
+import LeadersPanel from './pages/LeadersPanel'
 import AcknowledgementsPanel from './pages/AcknowledgementsPanel'
 import EditorsPanel from './pages/EditorsPanel'
 import { ErrorBoundary } from './components/ErrorBoundary'
@@ -17,6 +18,7 @@ const BASE_NAV = [
   { to: '/volumes',    label: 'Volumes',          icon: BookOpen },
   { to: '/columns',    label: 'Columns',          icon: Tag },
   { to: '/hero',       label: 'Hero rotation',    icon: ImageIcon },
+  { to: '/leaders',    label: 'Leadership',       icon: Star },
   { to: '/people',     label: 'Team & Alumni',    icon: Users },
   { to: '/thanks',     label: 'Acknowledgements',  icon: Heart },
 ] as const
@@ -81,6 +83,7 @@ export default function App() {
         <Route path="/volumes/*" element={<Protected label="Volumes"><VolumesPanel /></Protected>} />
         <Route path="/columns" element={<Protected label="Columns"><ColumnsPanel /></Protected>} />
         <Route path="/hero" element={<Protected label="Hero"><HeroPanel /></Protected>} />
+        <Route path="/leaders" element={<Protected label="Leadership"><LeadersPanel /></Protected>} />
         <Route path="/people" element={<Protected label="Team & Alumni"><TeamAlumniPanel /></Protected>} />
         <Route path="/thanks" element={<Protected label="Acknowledgements"><AcknowledgementsPanel /></Protected>} />
         <Route path="/editors" element={<Protected label="Editors"><EditorsPanel /></Protected>} />
