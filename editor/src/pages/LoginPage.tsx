@@ -3,11 +3,14 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth'
 
 export default function LoginPage() {
-  const { session, signIn, loading: authLoading } = useAuth()
+  const { session, signIn, resetPassword, loading: authLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  // 'forgot' swaps the form for a single email field; 'sent' is the
+  // confirmation after Supabase accepts the request.
+  const [mode, setMode] = useState<'signin' | 'forgot' | 'sent'>('signin')
 
   if (!authLoading && session) return <Navigate to="/articles" replace />
 
@@ -26,6 +29,65 @@ export default function LoginPage() {
       window.location.href = '/articles'
     }
     catch (e: any) { setErr(e?.message ?? 'Sign in failed'); setBusy(false) }
+  }
+
+  const sendReset = async (e: FormEvent) => {
+    e.preventDefault()
+    setErr(null); setBusy(true)
+    try {
+      await resetPassword(email.trim())
+      setMode('sent')
+    } catch (e: any) {
+      setErr(e?.message ?? 'Could not send reset email')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (mode === 'sent') {
+    return (
+      <div className="login">
+        <div className="login__card">
+          <div className="login__brand">The Mortals</div>
+          <div className="login__sub">Editor Panel</div>
+          <p className="login__hint login__hint--lead">
+            If <strong>{email}</strong> has an account, a reset link is on its way.
+            Open it on this device and you'll be asked to choose a new password.
+          </p>
+          <p className="login__hint">
+            Nothing after a few minutes? Check spam, then{' '}
+            <button type="button" className="login__link" onClick={() => setMode('forgot')}>try again</button>.
+          </p>
+          <button type="button" className="login__link" onClick={() => setMode('signin')}>← Back to sign in</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (mode === 'forgot') {
+    return (
+      <div className="login">
+        <div className="login__card">
+          <div className="login__brand">The Mortals</div>
+          <div className="login__sub">Reset your password</div>
+          <form className="login__form" onSubmit={sendReset}>
+            <label className="login__label">
+              <span>Email</span>
+              <input
+                type="email" autoComplete="email" required autoFocus
+                value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
+              />
+            </label>
+            {err && <div className="login__error">{err}</div>}
+            <button type="submit" className="login__btn" disabled={busy}>
+              {busy ? 'Sending…' : 'Email me a reset link'}
+            </button>
+          </form>
+          <button type="button" className="login__link" onClick={() => { setErr(null); setMode('signin') }}>← Back to sign in</button>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -52,6 +114,9 @@ export default function LoginPage() {
           {err && <div className="login__error">{err}</div>}
           <button type="submit" className="login__btn" disabled={busy}>
             {busy ? 'Signing in…' : 'Sign in'}
+          </button>
+          <button type="button" className="login__link login__link--forgot" onClick={() => { setErr(null); setMode('forgot') }}>
+            Forgot password?
           </button>
         </form>
         <p className="login__hint">

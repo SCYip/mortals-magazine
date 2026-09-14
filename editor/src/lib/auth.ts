@@ -9,6 +9,10 @@ type AuthState = {
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
+  /** Email a password-recovery link that lands on /reset-password. */
+  resetPassword: (email: string) => Promise<void>
+  /** Set a new password for the currently signed-in (recovery) session. */
+  updatePassword: (password: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthState | null>(null)
@@ -51,8 +55,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // (rows, loading flags, etc.) so the next sign-in starts clean.
     window.location.href = '/login'
   }
+  const resetPassword = async (email: string) => {
+    // The link Supabase emails must land somewhere that can finish the
+    // flow, and that origin has to be on the project's redirect allow-list
+    // (Auth → URL Configuration) or Supabase silently falls back to the
+    // Site URL instead.
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) throw error
+  }
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw error
+  }
 
-  const value: AuthState = { session, loading, signIn, signOut }
+  const value: AuthState = { session, loading, signIn, signOut, resetPassword, updatePassword }
   return createElement(AuthContext.Provider, { value }, children)
 }
 

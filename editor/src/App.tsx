@@ -3,6 +3,7 @@ import { LogOut, FileText, BookOpen, Image as ImageIcon, Users, Crown, Tag, Hear
 import { useAuth, AuthProvider } from './lib/auth'
 import { useRole } from './lib/role'
 import LoginPage from './pages/LoginPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import ArticlesPanel from './pages/ArticlesPanel'
 import VolumesPanel from './pages/VolumesPanel'
 import ColumnsPanel from './pages/ColumnsPanel'
@@ -78,6 +79,7 @@ export default function App() {
     <AuthProvider>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/" element={<Navigate to="/articles" replace />} />
         <Route path="/articles/*" element={<Protected label="Articles"><ArticlesPanel /></Protected>} />
         <Route path="/volumes/*" element={<Protected label="Volumes"><VolumesPanel /></Protected>} />

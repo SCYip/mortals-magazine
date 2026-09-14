@@ -512,3 +512,13 @@ img { display: block; max-width: 100%; }
   flex: 0 0 auto;
 }
 .form__field--check span { font-size: 12px; line-height: 1.4; }
+
+/* ---------- Login: forgot / reset password ---------- */
+.login__link {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font-family: var(--f-ui); font-size: 12px; color: var(--c-muted);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.login__link:hover { color: var(--c-text, #1a1a1a); }
+.login__link--forgot { align-self: flex-end; margin-top: 6px; }
+.login__hint--lead { font-size: 13px; color: var(--c-text, #1a1a1a); }
