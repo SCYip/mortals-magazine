@@ -550,6 +550,5 @@ img { display: block; max-width: 100%; }
   width: 100%; box-sizing: border-box; margin-bottom: 10px; padding: 8px 10px;
   border: 1px solid var(--c-border, #e6e9f0); border-radius: 6px; font-family: var(--f-ui); font-size: 13px;
 }
-.picks__full { font-family: var(--f-ui); font-size: 12px; color: var(--c-muted); margin: 0 0 8px; }
 .flash--ok { background: #eaf7ee; color: #1d6b3a; border: 1px solid #bfe5cb; }
 @media (max-width: 960px) { .picks { grid-template-columns: 1fr; } }

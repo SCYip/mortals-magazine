@@ -277,10 +277,11 @@ async function fetchArticles(): Promise<Article[]> {
 }
 
 /**
- * The home page rail. Curated picks in slot order when editors have set
- * any; otherwise the five newest, which is what the rail always showed
- * before curation existed. Derived from the cached article list so it
- * costs no extra request and works identically on the static fallback.
+ * The home page rail. Every curated pick in slot order, however many the
+ * editors have chosen; only when none are chosen does it fall back to the
+ * five newest, which is what the rail always showed before curation
+ * existed. Derived from the cached article list so it costs no extra
+ * request and works identically on the static fallback.
  */
 export const getEditorsPicks = () => swr('editorsPicks', fetchEditorsPicks)
 
@@ -289,7 +290,7 @@ async function fetchEditorsPicks(): Promise<Article[]> {
   const curated = all
     .filter(a => a.pickOrder != null)
     .sort((a, b) => (a.pickOrder! - b.pickOrder!))
-  return (curated.length > 0 ? curated : all).slice(0, 5)
+  return curated.length > 0 ? curated : all.slice(0, 5)
 }
 
 export const getArticleBySlug = (slug: string) =>

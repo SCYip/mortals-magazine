@@ -17,7 +17,7 @@ export default function EditorsPicks() {
               <span className="overline">Curated Selection</span>
               <h2 className="picks__title">Editor's Picks</h2>
               <p className="picks__kicker">
-                Five pieces our editors keep returning to — from the latest volume and the archive alike.
+                The pieces our editors keep returning to — from the latest volume and the archive alike.
               </p>
             </div>
             <Link to="/all-articles" className="picks__all">

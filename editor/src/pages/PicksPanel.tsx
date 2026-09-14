@@ -6,9 +6,6 @@ import type { ArticleRow } from '../lib/types'
 import { useTabRefocus } from '../lib/useTabRefocus'
 import { resolveImageUrl } from '../components/ImageStrip'
 
-/** The rail on the home page has exactly this many slots. */
-export const MAX_PICKS = 5
-
 type PickRow = Pick<ArticleRow, 'id' | 'slug' | 'title' | 'author' | 'date_label' | 'genre' | 'image_url' | 'pick_order'>
 const COLS = 'id,slug,title,author,date_label,genre,image_url,pick_order'
 
@@ -17,7 +14,7 @@ const COLS = 'id,slug,title,author,date_label,genre,image_url,pick_order'
  *
  * Left: the current picks in rail order — reorder with the arrows, drop
  * with ✕. Right: every other published article, searchable, with an Add
- * button that's disabled once the rail is full. Nothing touches the
+ * button. There is no cap: the home page rail scrolls. Nothing touches the
  * database until Save, which writes the whole set in one go: clear every
  * slot, then assign 1..n. That keeps the stored state consistent even if
  * two editors race, at the cost of last-writer-wins.
@@ -45,7 +42,6 @@ export default function PicksPanel() {
       const current = rows
         .filter(r => r.pick_order != null)
         .sort((a, b) => (a.pick_order! - b.pick_order!))
-        .slice(0, MAX_PICKS)
       setPicks(current)
       setSavedIds(current.map(r => r.id))
     } catch (e: any) {
@@ -75,7 +71,7 @@ export default function PicksPanel() {
     setPicks(next)
   }
   const remove = (id: number) => setPicks(picks.filter(p => p.id !== id))
-  const add = (r: PickRow) => { if (picks.length < MAX_PICKS) setPicks([...picks, r]) }
+  const add = (r: PickRow) => setPicks([...picks, r])
   const reset = () => setPicks(all.filter(r => savedIds.includes(r.id)).sort((a, b) => savedIds.indexOf(a.id) - savedIds.indexOf(b.id)))
 
   const save = async () => {
@@ -106,7 +102,7 @@ export default function PicksPanel() {
         <div>
           <h1 className="panel__title">Editor's Picks</h1>
           <p className="panel__sub">
-            The five-slot rail on the home page. Order here is the order readers see.
+            The scrolling rail on the home page. Order here is the order readers see; add as many as you like.
             {picks.length === 0 && ' With no picks chosen, the rail shows the five newest articles.'}
           </p>
         </div>
@@ -125,7 +121,7 @@ export default function PicksPanel() {
 
       <div className="picks">
         <section className="picks__col">
-          <h2 className="panel__group-title">On the rail · {picks.length} / {MAX_PICKS}</h2>
+          <h2 className="panel__group-title">On the rail · {picks.length}</h2>
           {picks.length === 0 && <p className="panel__loading">Nothing picked yet — add from the right.</p>}
           <ol className="picks__list">
             {picks.map((p, i) => (
@@ -153,7 +149,6 @@ export default function PicksPanel() {
             placeholder="Search published articles by title or author…"
             value={q} onChange={e => setQ(e.target.value)}
           />
-          {picks.length >= MAX_PICKS && <p className="picks__full">The rail is full — remove one to add another.</p>}
           <ul className="picks__list picks__list--pool">
             {pool.map(r => (
               <li key={r.id} className="picks__slot picks__slot--pool">
@@ -162,7 +157,7 @@ export default function PicksPanel() {
                   <div className="card__title">{r.title}</div>
                   <div className="card__meta">{r.author} · {r.date_label}</div>
                 </div>
-                <button className="icon-btn" title="Add to picks" onClick={() => add(r)} disabled={picks.length >= MAX_PICKS}><Plus size={14} /></button>
+                <button className="icon-btn" title="Add to picks" onClick={() => add(r)}><Plus size={14} /></button>
               </li>
             ))}
             {pool.length === 0 && !loadError && <li className="panel__loading">{q ? 'No articles match.' : 'Every published article is already on the rail.'}</li>}
