@@ -1,13 +1,12 @@
 import { Link } from 'react-router-dom'
 import { ArrowRight } from 'lucide-react'
-import { useArticles } from '../../data/hooks'
+import { useEditorsPicks } from '../../data/hooks'
 import ArticleCard from '../articles/ArticleCard'
 import Reveal from '../ui/Reveal'
 import './EditorsPicks.css'
 
 export default function EditorsPicks() {
-  const { articles } = useArticles()
-  const picks = articles.slice(0, 5)
+  const { picks } = useEditorsPicks()
 
   return (
     <section className="picks section">

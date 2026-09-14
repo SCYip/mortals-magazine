@@ -17,6 +17,9 @@ export interface Article {
    * Inkmagination and Fourteenlines, for example). */
   columnSlugs?: string[];
   tags?: string[];
+  /** Slot on the home page Editor's Picks rail (1 = first). Undefined when
+   * not a pick. Managed from the editor panel. */
+  pickOrder?: number;
 }
 
 export interface Column {

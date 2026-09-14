@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
-import { LogOut, FileText, BookOpen, Image as ImageIcon, Users, Crown, Tag, Heart, Star } from 'lucide-react'
+import { LogOut, FileText, BookOpen, Image as ImageIcon, Users, Crown, Tag, Heart, Star, Sparkles } from 'lucide-react'
 import { useAuth, AuthProvider } from './lib/auth'
 import { useRole } from './lib/role'
 import LoginPage from './pages/LoginPage'
@@ -10,12 +10,14 @@ import ColumnsPanel from './pages/ColumnsPanel'
 import HeroPanel from './pages/HeroPanel'
 import TeamAlumniPanel from './pages/TeamAlumniPanel'
 import LeadersPanel from './pages/LeadersPanel'
+import PicksPanel from './pages/PicksPanel'
 import AcknowledgementsPanel from './pages/AcknowledgementsPanel'
 import EditorsPanel from './pages/EditorsPanel'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
 const BASE_NAV = [
   { to: '/articles',   label: 'Articles',         icon: FileText },
+  { to: '/picks',      label: "Editor's Picks",   icon: Sparkles },
   { to: '/volumes',    label: 'Volumes',          icon: BookOpen },
   { to: '/columns',    label: 'Columns',          icon: Tag },
   { to: '/hero',       label: 'Hero rotation',    icon: ImageIcon },
@@ -82,6 +84,7 @@ export default function App() {
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/" element={<Navigate to="/articles" replace />} />
         <Route path="/articles/*" element={<Protected label="Articles"><ArticlesPanel /></Protected>} />
+        <Route path="/picks" element={<Protected label="Editor's Picks"><PicksPanel /></Protected>} />
         <Route path="/volumes/*" element={<Protected label="Volumes"><VolumesPanel /></Protected>} />
         <Route path="/columns" element={<Protected label="Columns"><ColumnsPanel /></Protected>} />
         <Route path="/hero" element={<Protected label="Hero"><HeroPanel /></Protected>} />

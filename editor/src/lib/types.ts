@@ -15,6 +15,8 @@ export interface ArticleRow {
   tags: string[] | null
   published: boolean
   published_at: string
+  /** Slot on the home page Editor's Picks rail (1 = first); null when not a pick. */
+  pick_order: number | null
   created_at: string
   updated_at: string
 }

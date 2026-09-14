@@ -70,6 +70,7 @@ type ArticleRow = {
   tags: string[] | null
   published: boolean
   published_at: string
+  pick_order?: number | null
 }
 const mapArticle = (r: ArticleRow, columnSlugs?: string[]): Article => ({
   id: String(r.id),
@@ -90,6 +91,7 @@ const mapArticle = (r: ArticleRow, columnSlugs?: string[]): Article => ({
     ? columnSlugs
     : (r.column_slug ? [r.column_slug] : []),
   tags: r.tags ?? undefined,
+  pickOrder: r.pick_order ?? undefined,
 })
 
 type ColumnRow = {
@@ -247,7 +249,7 @@ export const getArticles = () => swr('articles', fetchArticles)
 // are hundreds of KB of JSON that no card/list view ever renders. The
 // article page fetches the one body it needs via getArticleBySlug.
 const ARTICLE_LIST_COLUMNS =
-  'id,slug,title,author,author_affiliation,date_label,genre,excerpt,image_url,column_slug,tags,published,published_at'
+  'id,slug,title,author,author_affiliation,date_label,genre,excerpt,image_url,column_slug,tags,published,published_at,pick_order'
 
 async function fetchArticles(): Promise<Article[]> {
   if (!hasSupabase || !supabase || backendDown()) return withStaticColumnSlugs((await loadSeed()).articles)
@@ -272,6 +274,22 @@ async function fetchArticles(): Promise<Article[]> {
   return (artRes.data as ArticleRow[]).map((r) =>
     mapArticle(r, linksByArticle.get(r.id)),
   )
+}
+
+/**
+ * The home page rail. Curated picks in slot order when editors have set
+ * any; otherwise the five newest, which is what the rail always showed
+ * before curation existed. Derived from the cached article list so it
+ * costs no extra request and works identically on the static fallback.
+ */
+export const getEditorsPicks = () => swr('editorsPicks', fetchEditorsPicks)
+
+async function fetchEditorsPicks(): Promise<Article[]> {
+  const all = await getArticles()
+  const curated = all
+    .filter(a => a.pickOrder != null)
+    .sort((a, b) => (a.pickOrder! - b.pickOrder!))
+  return (curated.length > 0 ? curated : all).slice(0, 5)
 }
 
 export const getArticleBySlug = (slug: string) =>
