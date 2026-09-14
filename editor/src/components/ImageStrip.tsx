@@ -7,12 +7,12 @@
 // Where the public site lives. Image URLs in our content are usually
 // relative (e.g. `/images/foo.png`) because they're served by the main
 // mortalsmag deploy. The editor lives on a different origin, so a
-// relative `<img src>` would resolve to the editor's domain and
-// Netlify's SPA fallback would hand back index.html instead of the
-// image. We rewrite those paths to point at the public site.
+// relative `<img src>` would resolve to the editor's domain and the
+// SPA fallback would hand back index.html instead of the image. We
+// rewrite those paths to point at the public site.
 const PUBLIC_SITE =
   (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.replace(/\/$/, '') ||
-  'https://mortalsmag.netlify.app'
+  'https://mortalsmag.pages.dev'
 
 /** Turn a possibly-relative image path into a fully-qualified URL. */
 export function resolveImageUrl(url: string): string {
