@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, createElement } from 'react'
 import { Session } from '@supabase/supabase-js'
-import { supabase, unstickAuthLock } from './supabase'
+import { supabaseAuth, readStoredSession, AUTH_FETCH_TIMEOUT_MS } from './supabase'
 
 // Single source of truth for the auth session — one Provider at the
 // app root, every other component reads via useAuth().
@@ -28,35 +28,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s)
       setLoading(false)
     }
-    // Bootstrap the session, but never let it hang. getSession() waits on
-    // a navigator lock; if another tab is holding that lock and has gone
-    // to sleep, this promise never settles and the app sits on "Loading…"
-    // until someone reloads. Give it a few seconds, then steal the lock
-    // and try once more; if it still won't settle, fall through to the
-    // login screen rather than an infinite spinner.
-    const BOOT_TIMEOUT_MS = 6000
+    // Bootstrap the session, but never let it hang. If a token refresh is
+    // stalled, getSession() queues behind it inside supabase-js; the auth
+    // fetch deadline in supabase.ts aborts that refresh, after which this
+    // settles. Wait a little longer than that deadline, then fall through
+    // to the login screen rather than an infinite spinner.
+    const BOOT_TIMEOUT_MS = AUTH_FETCH_TIMEOUT_MS + 3000
     const withTimeout = <T,>(p: Promise<T>) => new Promise<T>((res, rej) => {
       const t = setTimeout(() => rej(new Error('getSession timed out')), BOOT_TIMEOUT_MS)
       p.then(v => { clearTimeout(t); res(v) }, e => { clearTimeout(t); rej(e) })
     })
-    ;(async () => {
-      try {
-        const { data } = await withTimeout(supabase.auth.getSession())
-        apply(data.session)
-      } catch (err: any) {
-        console.warn('[auth] getSession failed:', err?.message ?? err)
-        const stole = await unstickAuthLock('auth bootstrap timed out')
-        if (!stole) { apply(null); return }
-        try {
-          const { data } = await withTimeout(supabase.auth.getSession())
-          apply(data.session)
-        } catch (err2: any) {
-          console.warn('[auth] getSession failed after unstick:', err2?.message ?? err2)
-          apply(null)
-        }
-      }
-    })()
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    withTimeout(supabaseAuth.auth.getSession())
+      .then(({ data }) => apply(data.session))
+      .catch(err => {
+        // The queue is wedged. Storage still holds the last good session;
+        // if it hasn't expired, use it rather than bouncing to /login —
+        // the data client reads from storage anyway, so the app works.
+        const stored = readStoredSession()
+        const alive = stored && (stored.expires_at ?? 0) > Math.floor(Date.now() / 1000)
+        console.warn('[auth] getSession failed:', err?.message ?? err, alive ? '— using stored session' : '— no usable stored session')
+        apply(alive ? stored : null)
+      })
+    const { data: sub } = supabaseAuth.auth.onAuthStateChange((_event, s) => {
       if (cancelled) return
       setSession(s)
       setLoading(false)
@@ -68,11 +61,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabaseAuth.auth.signInWithPassword({ email, password })
     if (error) throw error
   }
   const signOut = async () => {
-    await supabase.auth.signOut()
+    await supabaseAuth.auth.signOut()
     // Full reload to /login. Clears any panel-level component state
     // (rows, loading flags, etc.) so the next sign-in starts clean.
     window.location.href = '/login'
@@ -82,13 +75,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // flow, and that origin has to be on the project's redirect allow-list
     // (Auth → URL Configuration) or Supabase silently falls back to the
     // Site URL instead.
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    const { error } = await supabaseAuth.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     })
     if (error) throw error
   }
   const updatePassword = async (password: string) => {
-    const { error } = await supabase.auth.updateUser({ password })
+    const { error } = await supabaseAuth.auth.updateUser({ password })
     if (error) throw error
   }
 

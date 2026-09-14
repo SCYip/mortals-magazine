@@ -1,4 +1,4 @@
-import { supabase, unstickAuthLock } from './supabase'
+import { supabase, supabaseAuth, readStoredSession, AUTH_FETCH_TIMEOUT_MS } from './supabase'
 
 /**
  * Run a PostgREST query in a way that cannot silently hang or go out with
@@ -6,28 +6,27 @@ import { supabase, unstickAuthLock } from './supabase'
  *
  * Why this exists: every panel used to call `supabase.from(...).select()`
  * directly, and "sometimes the panel never loads until I refresh" was the
- * result. Two things were happening, neither of which the panels could
- * see:
+ * result. The mechanism, confirmed against supabase-js source and
+ * reproduced in a test: a token refresh that stalls on the network leaves
+ * the auth client's internal queue wedged, and every `getSession()` —
+ * which the data client used to call before each request — waited behind
+ * it forever.
  *
- *   1. The tab sat in the background for over an hour, the JWT expired,
- *      and useTabRefocus fired a refetch the instant the tab came back —
- *      before supabase-js had refreshed the token. The request went out
- *      with an expired JWT and came back empty or 401.
- *   2. `supabase.auth.getSession()` waited on a navigator.locks lock that
- *      a previous tab never released. Nothing ever resolved, the panel
- *      stayed on "Loading…" forever, and a reload fixed it only because
- *      module load steals stale locks (see supabase.ts).
- *
- * This wraps the *call site* rather than supabase-js itself. supabase.ts
- * carries a hard-won warning against intercepting fetch or managing locks
- * inside the client; everything here happens outside it and is plain
- * await-with-timeout-and-retry.
+ * Two things fix that, and this file is the second:
+ *   1. supabase.ts gives the data client its own token source (storage),
+ *      so a read never enters the auth queue at all; and bounds auth
+ *      requests so a stalled refresh fails and the queue drains.
+ *   2. Here, each read gets a hard timeout and a single retry, and an
+ *      auth error from the server triggers one bounded refresh before
+ *      that retry. Nothing here blocks on the auth queue up front.
  */
 
-const QUERY_TIMEOUT_MS = 10_000
-const SESSION_TIMEOUT_MS = 6_000
-// Refresh proactively if the token would expire within this window — a
-// token that's valid now but dies mid-request is still a failed request.
+const QUERY_TIMEOUT_MS = 15_000
+// A refresh request is aborted at AUTH_FETCH_TIMEOUT_MS; give the promise a
+// little longer than that to settle before we stop waiting on it.
+const REFRESH_WAIT_MS = AUTH_FETCH_TIMEOUT_MS + 3_000
+// Refresh proactively if the stored token dies within this window — a
+// token that's valid now but expires mid-request is still a failed request.
 const EXPIRY_MARGIN_S = 60
 
 export class QueryTimeoutError extends Error {
@@ -55,54 +54,56 @@ function isAuthError(err: { code?: string; message?: string; status?: number } |
   return /jwt|expired|invalid token|not authenticated/i.test(err.message ?? '')
 }
 
-/**
- * Make sure the client holds a token that will outlive the request.
- * Throws QueryTimeoutError if getSession() hangs, after one attempt to
- * unstick the auth lock.
- */
-export async function ensureFreshSession(): Promise<void> {
-  let sessionRes
-  try {
-    sessionRes = await withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS, 'getSession')
-  } catch (err) {
-    if (!(err instanceof QueryTimeoutError)) throw err
-    // The classic symptom of a stuck lock. Steal it and try exactly once more.
-    const stole = await unstickAuthLock('getSession timed out')
-    if (!stole) throw err
-    sessionRes = await withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS, 'getSession (after unstick)')
-  }
-  const session = sessionRes.data.session
-  if (!session) throw new Error('Not signed in')
+const secondsLeft = (expiresAt: number | undefined) =>
+  (expiresAt ?? 0) - Math.floor(Date.now() / 1000)
 
-  const secondsLeft = (session.expires_at ?? 0) - Math.floor(Date.now() / 1000)
-  if (secondsLeft < EXPIRY_MARGIN_S) {
-    const { error } = await withTimeout(supabase.auth.refreshSession(), SESSION_TIMEOUT_MS, 'refreshSession')
-    if (error) throw error
+/**
+ * Ask the auth client for a new token, but never wait on it for longer
+ * than the auth deadline allows. Failure is logged, not thrown: the caller
+ * retries with whatever is in storage and lets the server be the judge.
+ */
+async function refreshBounded(reason: string): Promise<void> {
+  try {
+    const { error } = await withTimeout(supabaseAuth.auth.refreshSession(), REFRESH_WAIT_MS, 'refreshSession')
+    if (error) console.warn(`[query] refresh (${reason}) failed:`, error.message)
+  } catch (err) {
+    console.warn(`[query] refresh (${reason}) did not settle:`, (err as Error)?.message ?? err)
   }
 }
 
 /**
- * Same hang-proof session acquisition as ensureFreshSession, for the
- * places that need the raw token — the edge-function calls that manage
- * editors, which used to `await supabase.auth.getSession()` directly and
- * so hung on the same stuck lock as everything else.
+ * The access token for a direct call (the editor-management edge
+ * functions). Comes from storage — instantly — unless it has expired or
+ * is about to, in which case one bounded refresh is attempted first.
  */
 export async function getFreshAccessToken(): Promise<string> {
-  await ensureFreshSession()
-  const { data } = await withTimeout(supabase.auth.getSession(), SESSION_TIMEOUT_MS, 'getSession')
-  const token = data.session?.access_token
-  if (!token) throw new Error('Not signed in')
-  return token
+  const stored = readStoredSession()
+  if (stored?.access_token && secondsLeft(stored.expires_at) > EXPIRY_MARGIN_S) return stored.access_token
+  await refreshBounded(stored ? 'token near expiry' : 'no stored session')
+  const after = readStoredSession()
+  if (!after?.access_token) throw new Error('Not signed in')
+  return after.access_token
 }
 
 /** The shape every supabase-js query response shares. */
 type AnyResult = { data: unknown; error: { code?: string; message: string; status?: number } | null }
 
+/**
+ * Run `build()` — which must construct a *fresh* query each call, since a
+ * PostgrestBuilder can't be safely awaited twice — with a hard timeout and
+ * one retry, refreshing the token first only when it is already dead.
+ *
+ * Resolves with the usual `{ data, error }` so call sites keep their
+ * existing `if (error) throw error` shape. Rejects only when both attempts
+ * fail, so a panel shows its error/Retry state instead of an indefinite
+ * spinner.
+ */
 export async function runQuery<R extends AnyResult>(build: () => PromiseLike<R>): Promise<R> {
-  const attempt = async (): Promise<R> => {
-    await ensureFreshSession()
-    return withTimeout(build(), QUERY_TIMEOUT_MS, 'query')
-  }
+  // Don't bother the server with a token we already know is expired.
+  const stored = readStoredSession()
+  if (stored && secondsLeft(stored.expires_at) <= 0) await refreshBounded('stored token expired')
+
+  const attempt = (): Promise<R> => withTimeout(build(), QUERY_TIMEOUT_MS, 'query')
 
   let first: R
   try {
@@ -113,12 +114,9 @@ export async function runQuery<R extends AnyResult>(build: () => PromiseLike<R>)
   }
 
   if (first.error && isAuthError(first.error)) {
-    // The token looked fine to ensureFreshSession but the server disagreed
-    // (clock skew, revoked, etc.). Force a refresh and go again.
     console.warn('[query] auth error from server, refreshing and retrying:', first.error.message)
-    const { error: refreshErr } = await withTimeout(supabase.auth.refreshSession(), SESSION_TIMEOUT_MS, 'refreshSession')
-    if (refreshErr) return first
-    return withTimeout(build(), QUERY_TIMEOUT_MS, 'query (after refresh)')
+    await refreshBounded('server rejected token')
+    return attempt()
   }
   return first
 }

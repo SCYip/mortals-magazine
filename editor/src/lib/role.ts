@@ -3,7 +3,7 @@
  * Refreshes when the auth session changes.
  */
 import { useEffect, useRef, useState } from 'react'
-import { supabase } from './supabase'
+import { supabase, supabaseAuth, readStoredSession } from './supabase'
 import { runQuery } from './query'
 
 export type Role = 'chief' | 'editor'
@@ -29,8 +29,11 @@ export function useRole() {
     const fetchRole = async () => {
       if (!hasLoadedOnce.current) setLoading(true)
       try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
+        // Read the user from storage, not getSession(): this gates the
+        // Editors tab, and a wedged auth queue used to hide it from the
+        // chief until a reload.
+        const session = readStoredSession()
+        if (!session?.user) {
           if (!cancelled) setRole(null)
           return
         }
@@ -60,7 +63,7 @@ export function useRole() {
       }
     }
     fetchRole()
-    const { data: sub } = supabase.auth.onAuthStateChange(() => fetchRole())
+    const { data: sub } = supabaseAuth.auth.onAuthStateChange(() => fetchRole())
     return () => { cancelled = true; sub.subscription.unsubscribe() }
   }, [])
 
