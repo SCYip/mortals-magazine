@@ -1,0 +1,5 @@
+# Cache hashed assets aggressively; leave HTML uncached so deploys roll out immediately
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
