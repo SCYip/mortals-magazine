@@ -4,6 +4,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from './supabase'
+import { runQuery } from './query'
 
 export type Role = 'chief' | 'editor'
 
@@ -33,11 +34,13 @@ export function useRole() {
           if (!cancelled) setRole(null)
           return
         }
-        const { data, error } = await supabase
+        // runQuery: a hung read here silently hid the Editors tab from the
+        // chief until they reloaded.
+        const { data, error } = await runQuery(() => supabase
           .from('profiles')
           .select('role')
           .eq('user_id', session.user.id)
-          .maybeSingle()
+          .maybeSingle())
         if (cancelled) return
         if (error) {
           console.warn('[role] fetch error:', error.message)
@@ -46,7 +49,7 @@ export function useRole() {
           setRole((data?.role as Role) ?? 'editor')
         }
       } catch (err: any) {
-        // AbortError from the 15 s fetch timeout, network error, etc.
+        // Timeout from runQuery, network error, etc.
         // Leave the previous role in place rather than wiping it.
         if (!cancelled) console.warn('[role] fetch threw:', err?.message ?? err)
       } finally {

@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode, createElement } from 'react'
 import { Session } from '@supabase/supabase-js'
-import { supabase } from './supabase'
+import { supabase, unstickAuthLock } from './supabase'
 
 // Single source of truth for the auth session — one Provider at the
 // app root, every other component reads via useAuth().
@@ -28,12 +28,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s)
       setLoading(false)
     }
-    supabase.auth.getSession()
-      .then(({ data }) => apply(data.session))
-      .catch(err => {
+    // Bootstrap the session, but never let it hang. getSession() waits on
+    // a navigator lock; if another tab is holding that lock and has gone
+    // to sleep, this promise never settles and the app sits on "Loading…"
+    // until someone reloads. Give it a few seconds, then steal the lock
+    // and try once more; if it still won't settle, fall through to the
+    // login screen rather than an infinite spinner.
+    const BOOT_TIMEOUT_MS = 6000
+    const withTimeout = <T,>(p: Promise<T>) => new Promise<T>((res, rej) => {
+      const t = setTimeout(() => rej(new Error('getSession timed out')), BOOT_TIMEOUT_MS)
+      p.then(v => { clearTimeout(t); res(v) }, e => { clearTimeout(t); rej(e) })
+    })
+    ;(async () => {
+      try {
+        const { data } = await withTimeout(supabase.auth.getSession())
+        apply(data.session)
+      } catch (err: any) {
         console.warn('[auth] getSession failed:', err?.message ?? err)
-        apply(null)
-      })
+        const stole = await unstickAuthLock('auth bootstrap timed out')
+        if (!stole) { apply(null); return }
+        try {
+          const { data } = await withTimeout(supabase.auth.getSession())
+          apply(data.session)
+        } catch (err2: any) {
+          console.warn('[auth] getSession failed after unstick:', err2?.message ?? err2)
+          apply(null)
+        }
+      }
+    })()
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       if (cancelled) return
       setSession(s)

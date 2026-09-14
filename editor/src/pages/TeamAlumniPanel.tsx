@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
+import { runQuery } from '../lib/query'
 import type { TeamMemberRow, AlumRow } from '../lib/types'
 import ImageStrip, { resolveImageUrl } from '../components/ImageStrip'
 import { useTabRefocus } from '../lib/useTabRefocus'
@@ -33,7 +34,7 @@ function TeamSection() {
   const refetch = async () => {
     setLoadError(null)
     try {
-      const { data, error } = await supabase.from('team_members').select('*').order('sort_order')
+      const { data, error } = await runQuery(() => supabase.from('team_members').select('*').order('sort_order'))
       if (error) throw error
       setRows((data as TeamMemberRow[]) ?? [])
     } catch (e: any) {
@@ -113,7 +114,7 @@ function AlumniSection() {
   const refetch = async () => {
     setLoadError(null)
     try {
-      const { data, error } = await supabase.from('alumni').select('*').order('sort_order')
+      const { data, error } = await runQuery(() => supabase.from('alumni').select('*').order('sort_order'))
       if (error) throw error
       setRows((data as AlumRow[]) ?? [])
     } catch (e: any) {

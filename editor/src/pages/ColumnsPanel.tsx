@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
+import { runQuery } from '../lib/query'
 import type { ColumnRow } from '../lib/types'
 import { resolveImageUrl } from '../components/ImageStrip'
 import { useTabRefocus } from '../lib/useTabRefocus'
@@ -19,7 +20,7 @@ export default function ColumnsPanel() {
   const refetch = async () => {
     setLoadError(null)
     try {
-      const { data, error } = await supabase.from('columns').select('*').order('sort_order')
+      const { data, error } = await runQuery(() => supabase.from('columns').select('*').order('sort_order'))
       if (error) throw error
       setRows((data as ColumnRow[]) ?? [])
     } catch (e: any) {

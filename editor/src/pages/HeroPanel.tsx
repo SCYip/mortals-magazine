@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Plus, Trash2, Upload, Eye, EyeOff, ArrowUp, ArrowDown } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
+import { runQuery } from '../lib/query'
 import type { HeroSlideRow } from '../lib/types'
 import { resolveImageUrl } from '../components/ImageStrip'
 import { useTabRefocus } from '../lib/useTabRefocus'
@@ -16,7 +17,7 @@ export default function HeroPanel() {
     if (!hasLoadedOnce.current) setLoading(true)
     setLoadError(null)
     try {
-      const { data, error } = await supabase.from('hero_slides').select('*').order('sort_order')
+      const { data, error } = await runQuery(() => supabase.from('hero_slides').select('*').order('sort_order'))
       if (error) throw error
       setRows((data as HeroSlideRow[]) ?? [])
     } catch (e: any) {

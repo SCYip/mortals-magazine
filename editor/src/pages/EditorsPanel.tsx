@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { Crown, Mail, Lock, Trash2, UserPlus, Shuffle } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { runQuery, getFreshAccessToken } from '../lib/query'
 import { useRole, type ProfileRow } from '../lib/role'
 import { useTabRefocus } from '../lib/useTabRefocus'
 
@@ -31,10 +32,10 @@ export default function EditorsPanel() {
 
   const refetch = async () => {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await runQuery(() => supabase
         .from('profiles')
         .select('*')
-        .order('created_at', { ascending: true })
+        .order('created_at', { ascending: true }))
       if (error) {
         setMessage({ kind: 'err', text: error.message })
         return
@@ -76,15 +77,16 @@ export default function EditorsPanel() {
     }
     setCreating(true); setMessage(null)
     try {
-      // Grab the current access token so the function can verify we're chief.
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) throw new Error('Not signed in')
+      // Grab a fresh access token so the function can verify we're chief.
+      // Goes through the hang-proof path: a plain getSession() here sat
+      // behind a stuck navigator lock and left the button on "Creating…".
+      const token = await getFreshAccessToken()
       const resp = await fetch(`${FN_BASE}/create-editor`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
           apikey: ANON,
-          authorization: `Bearer ${session.access_token}`,
+          authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ email, password }),
       })
@@ -130,11 +132,10 @@ export default function EditorsPanel() {
     if (!confirm(`Revoke ${p.email}'s access? This permanently deletes their account.`)) return
     setMessage(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session?.access_token) throw new Error('Not signed in')
+      const token = await getFreshAccessToken()
       const resp = await fetch(`${FN_BASE}/delete-editor`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', apikey: ANON, authorization: `Bearer ${session.access_token}` },
+        headers: { 'content-type': 'application/json', apikey: ANON, authorization: `Bearer ${token}` },
         body: JSON.stringify({ user_id: p.user_id }),
       })
       const body = await resp.json().catch(() => ({}))

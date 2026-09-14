@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { runQuery } from '../lib/query'
 import type { AckRow } from '../lib/types'
 import { useTabRefocus } from '../lib/useTabRefocus'
 
@@ -13,7 +14,7 @@ export default function AcknowledgementsPanel() {
   const refetch = async () => {
     setLoadError(null)
     try {
-      const { data, error } = await supabase.from('acknowledgements').select('*').order('sort_order')
+      const { data, error } = await runQuery(() => supabase.from('acknowledgements').select('*').order('sort_order'))
       if (error) throw error
       setRows((data as AckRow[]) ?? [])
     } catch (e: any) {

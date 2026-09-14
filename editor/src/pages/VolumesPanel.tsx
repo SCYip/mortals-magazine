@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, FormEvent } from 'react'
 import { Plus, Trash2, Save } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
+import { runQuery } from '../lib/query'
 import type { VolumeRow, IssueRow } from '../lib/types'
 import ImageStrip, { resolveImageUrl } from '../components/ImageStrip'
 import { useTabRefocus } from '../lib/useTabRefocus'
@@ -22,8 +23,8 @@ export default function VolumesPanel() {
     setLoadError(null)
     try {
       const [vs, is_] = await Promise.all([
-        supabase.from('volumes').select('*').order('sort_order'),
-        supabase.from('issues').select('*').order('sort_order'),
+        runQuery(() => supabase.from('volumes').select('*').order('sort_order')),
+        runQuery(() => supabase.from('issues').select('*').order('sort_order')),
       ])
       if (vs.error) throw vs.error
       if (is_.error) throw is_.error

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, FormEvent } from 'react'
 import { Routes, Route, Link, useNavigate, useParams } from 'react-router-dom'
 import { Plus, Edit3, Trash2, Eye, EyeOff, ArrowLeft, Upload } from 'lucide-react'
 import { supabase, uploadImage } from '../lib/supabase'
+import { runQuery } from '../lib/query'
 import type { ArticleRow, ColumnRow, Genre } from '../lib/types'
 import ImageStrip, { extractImagesFromContent, resolveImageUrl } from '../components/ImageStrip'
 import { useTabRefocus } from '../lib/useTabRefocus'
@@ -41,7 +42,7 @@ function ArticlesList() {
     if (!hasLoadedOnce.current) setLoading(true)
     setLoadError(null)
     try {
-      const { data, error } = await supabase.from('articles').select('*').order('published_at', { ascending: false })
+      const { data, error } = await runQuery(() => supabase.from('articles').select('*').order('published_at', { ascending: false }))
       if (error) throw error
       if (data) setRows(data as ArticleRow[])
     } catch (e: any) {
@@ -164,8 +165,9 @@ function ArticleEditor() {
   const [tagsInput, setTagsInput] = useState('')
 
   useEffect(() => {
-    supabase.from('columns').select('*').order('sort_order')
+    runQuery(() => supabase.from('columns').select('*').order('sort_order'))
       .then(({ data }) => setColumns((data as ColumnRow[]) ?? []))
+      .catch(e => console.warn('[articles] columns load failed:', e?.message ?? e))
   }, [])
 
   useEffect(() => {
@@ -173,8 +175,8 @@ function ArticleEditor() {
     setLoading(true)
     // Fetch the article AND its column links in parallel.
     Promise.all([
-      supabase.from('articles').select('*').eq('id', Number(id)).single(),
-      supabase.from('article_columns').select('column_slug').eq('article_id', Number(id)),
+      runQuery(() => supabase.from('articles').select('*').eq('id', Number(id)).single()),
+      runQuery(() => supabase.from('article_columns').select('column_slug').eq('article_id', Number(id))),
     ]).then(([artRes, linkRes]) => {
       if (artRes.error || !artRes.data) {
         setErr(artRes.error?.message ?? 'Not found'); setLoading(false); return

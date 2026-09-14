@@ -6,10 +6,12 @@ import { useEffect, useRef } from 'react'
  * `visibilitychange` (tab switch / browser minimize) and
  * `window.focus`/`blur` (cross-app: alt-tab to WeChat etc.).
  *
- * Token freshness on refocus is handled in `supabase.ts` via the
- * `window.focus` listener that calls refreshSession() when the stored
- * access_token is close to expiry. By the time `refetch()` runs here
- * the token is current, so the REST call goes out cleanly.
+ * Token freshness is NOT handled here and not in supabase.ts either (a
+ * focus-driven refresh used to live there and was removed — it raced
+ * supabase-js's own refresh). Every panel's `refetch` goes through
+ * `runQuery` in query.ts, which refreshes a near-expiry token and
+ * unsticks a hung auth lock before the request goes out. That is what
+ * makes firing `refetch()` immediately on refocus safe.
  */
 export function useTabRefocus(refetch: () => void, minHiddenMs = 2000) {
   const cb = useRef(refetch)
