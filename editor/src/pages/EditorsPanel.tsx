@@ -4,6 +4,12 @@ import { supabase } from '../lib/supabase'
 import { useRole, type ProfileRow } from '../lib/role'
 import { useTabRefocus } from '../lib/useTabRefocus'
 
+// Editor-management endpoints live on Supabase Edge Functions (see
+// supabase/functions/). Being cross-origin, every call needs the anon key
+// as `apikey` alongside the caller's bearer token.
+const FN_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`
+const ANON = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+
 // Build a 24-char random password from a safe charset (no ambiguous
 // characters like 0/O, l/1) so the chief can copy or read it aloud.
 function randomPassword(len = 24) {
@@ -73,10 +79,11 @@ export default function EditorsPanel() {
       // Grab the current access token so the function can verify we're chief.
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) throw new Error('Not signed in')
-      const resp = await fetch('/.netlify/functions/create-editor', {
+      const resp = await fetch(`${FN_BASE}/create-editor`, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
+          apikey: ANON,
           authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({ email, password }),
@@ -125,9 +132,9 @@ export default function EditorsPanel() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) throw new Error('Not signed in')
-      const resp = await fetch('/.netlify/functions/delete-editor', {
+      const resp = await fetch(`${FN_BASE}/delete-editor`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json', authorization: `Bearer ${session.access_token}` },
+        headers: { 'content-type': 'application/json', apikey: ANON, authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ user_id: p.user_id }),
       })
       const body = await resp.json().catch(() => ({}))
